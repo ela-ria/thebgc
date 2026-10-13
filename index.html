@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BGC Gala Day</title>
+<meta name="description" content="BGC gala day. Saturday, October 24, 2026. Dress code, itinerary, places and lunch plan.">
+<meta name="theme-color" content="#ffd1df">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@1,500;1,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --pink-50:#fff5f8;
+    --pink-100:#ffe8ef;
+    --pink-200:#ffd1df;
+    --pink-300:#f9b4cb;
+    --rose:#d9608b;
+    --ink:#3b2430;
+    --muted:#8f7580;
+    --lav:#efe4fb;
+    --cream:#fff9f2;
+    --line:#f6d9e3;
+    --radius:28px;
+    --shadow:0 18px 40px -20px rgba(217,96,139,.35);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    font-family:"Outfit",system-ui,sans-serif;
+    color:var(--ink);
+    line-height:1.6;
+    background-color:var(--pink-50);
+    background-image:radial-gradient(rgba(249,180,203,.45) 1.2px,transparent 1.2px);
+    background-size:26px 26px;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  h1,h2,h3,h4,p,ul,ol{margin:0}
+  ul,ol{padding:0;list-style:none}
+  a{color:inherit}
+  .wrap{max-width:980px;margin:0 auto;padding:0 20px;position:relative}
+  .serif{font-family:"Playfair Display",serif;font-style:italic;font-weight:500}
+  svg.i{width:1em;height:1em;display:inline-block}
+  svg.sp,svg.corner,footer .row svg{aspect-ratio:1/1;height:auto}
+
+  /* nav */
+  .nav{display:flex;align-items:center;justify-content:space-between;padding:22px 0}
+  .brand{font-family:"Playfair Display",serif;font-style:italic;font-weight:600;font-size:24px;color:var(--rose);text-decoration:none}
+  .nav ul{display:none;gap:8px}
+  .nav a.link{display:block;padding:8px 16px;border-radius:999px;font-size:15px;text-decoration:none;color:var(--muted);transition:background .2s,color .2s}
+  .nav a.link:hover,.nav a.link:focus-visible{background:var(--pink-200);color:var(--ink)}
+  @media(min-width:640px){.nav ul{display:flex}}
+
+  /* hero */
+  .hero{
+    position:relative;overflow:hidden;
+    border-radius:40px;
+    padding:clamp(34px,7vw,76px) clamp(22px,6vw,64px) clamp(30px,5vw,48px);
+    background:linear-gradient(135deg,#ffdce8 0%,#fff0f5 52%,#efe4fb 100%);
+    border:2px solid #fff;
+    box-shadow:var(--shadow);
+    text-align:center;
+  }
+  .blob{position:absolute;border-radius:50%;filter:blur(40px);opacity:.7;pointer-events:none}
+  .blob.b1{width:260px;height:260px;background:#ffc2d6;left:-80px;top:-60px}
+  .blob.b2{width:300px;height:300px;background:#e3d1fa;right:-100px;bottom:-110px}
+  .sp{position:absolute;fill:var(--rose);opacity:.55;animation:twinkle 4.5s ease-in-out infinite}
+  .sp.s1{width:26px;left:9%;top:16%}
+  .sp.s2{width:16px;left:20%;top:62%;animation-delay:1.2s;fill:#f3a3bf}
+  .sp.s3{width:30px;right:10%;top:14%;animation-delay:.6s}
+  .sp.s4{width:14px;right:22%;top:55%;animation-delay:2.2s;fill:#f3a3bf}
+  .sp.s5{width:20px;right:7%;bottom:18%;animation-delay:1.8s}
+  .sp.s6{width:12px;left:6%;bottom:22%;animation-delay:3s}
+  @keyframes twinkle{
+    0%,100%{transform:scale(1) rotate(0);opacity:.55}
+    50%{transform:scale(1.25) rotate(18deg);opacity:.95}
+  }
+  .hero > *:not(.blob):not(.sp){position:relative;z-index:1}
+  .date-chip{
+    display:inline-flex;align-items:center;gap:8px;
+    background:#fff;border:1.5px solid var(--pink-300);border-radius:999px;
+    padding:8px 20px;font-size:14px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--rose);
+    transform:rotate(-2deg);box-shadow:0 8px 18px -10px rgba(217,96,139,.5);
+  }
+  .date-chip svg{width:14px;height:14px;fill:var(--rose)}
+  .hero h1{
+    margin-top:22px;
+    font-size:clamp(60px,15vw,138px);
+    font-weight:700;line-height:.95;letter-spacing:-.04em;color:var(--ink);
+  }
+  .hero h1 .serif{
+    display:block;font-size:.5em;letter-spacing:-.01em;color:var(--rose);margin-top:6px;
+  }
+  .lead{margin:18px auto 0;max-width:460px;color:var(--muted);font-size:clamp(16px,2.4vw,18px)}
+
+  .countdown{
+    margin:clamp(28px,5vw,44px) auto 0;max-width:560px;
+    display:grid;grid-template-columns:repeat(4,1fr);gap:10px;
+  }
+  .cd{
+    background:rgba(255,255,255,.8);backdrop-filter:blur(6px);
+    border:1.5px solid #fff;border-radius:22px;padding:14px 4px 12px;
+    box-shadow:0 10px 22px -14px rgba(217,96,139,.55);
+  }
+  .cd b{display:block;font-size:clamp(28px,7vw,46px);font-weight:600;line-height:1.1;color:var(--rose);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .cd small{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  #cd-note{margin-top:14px;font-size:14px;color:var(--muted)}
+
+  /* sections */
+  section{padding:clamp(52px,8vw,92px) 0 0}
+  .sec-head{text-align:center;margin-bottom:30px}
+  .sec-head .tiny{display:inline-flex;align-items:center;gap:8px;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--rose);font-weight:500}
+  .sec-head .tiny svg{width:12px;height:12px;fill:var(--rose)}
+  .sec-head h2{margin-top:6px;font-size:clamp(34px,6vw,52px);font-weight:600;letter-spacing:-.03em}
+  .sec-head h2 .serif{color:var(--rose);font-weight:500}
+  .sec-head p{margin-top:6px;color:var(--muted)}
+
+  /* dress code */
+  .two{display:grid;gap:18px;grid-template-columns:1fr}
+  @media(min-width:680px){.two{grid-template-columns:1fr 1fr}}
+  .dress{
+    position:relative;overflow:hidden;
+    border-radius:var(--radius);padding:34px 30px 36px;
+    border:2px solid #fff;box-shadow:var(--shadow);
+    transition:transform .25s ease;
+  }
+  .dress:hover{transform:translateY(-4px)}
+  .dress.g{background:linear-gradient(160deg,#ffe0ea,#fff2f6)}
+  .dress.b{background:linear-gradient(160deg,var(--lav),#fbf7ff)}
+  .dress .bow{width:54px;height:54px;margin-bottom:12px}
+  .dress.g .bow{fill:var(--rose)}
+  .dress.b .bow{fill:#9b7fd1}
+  .dress .label{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+  .dress h3{margin:8px 0 8px;font-size:clamp(28px,4.4vw,38px);font-weight:600;letter-spacing:-.02em;line-height:1.1}
+  .dress h3 .serif{color:var(--rose)}
+  .dress.b h3 .serif{color:#8466c0}
+  .dress p{color:var(--muted)}
+  .dress .corner{position:absolute;right:-18px;bottom:-18px;width:120px;opacity:.25}
+  .dress.g .corner{fill:var(--rose)}
+  .dress.b .corner{fill:#9b7fd1}
+
+  /* plan */
+  .timeline{position:relative;padding-left:34px}
+  .timeline::before{
+    content:"";position:absolute;left:10px;top:12px;bottom:12px;
+    border-left:3px dotted var(--pink-300);
+  }
+  .step{
+    position:relative;background:#fff;border-radius:24px;padding:20px 24px;margin-bottom:14px;
+    border:1.5px solid var(--line);box-shadow:0 12px 26px -20px rgba(217,96,139,.6);
+    transition:transform .2s ease;
+  }
+  .step:hover{transform:translateX(4px)}
+  .step::before{
+    content:"";position:absolute;left:-32px;top:26px;width:15px;height:15px;border-radius:50%;
+    background:var(--rose);border:3px solid var(--pink-50);box-shadow:0 0 0 2px var(--pink-300);
+  }
+  .step .t{
+    display:inline-block;font-size:13px;font-weight:500;color:var(--rose);
+    background:var(--pink-100);padding:3px 12px;border-radius:999px;margin-bottom:6px;
+  }
+  .step h3{font-size:20px;font-weight:600;letter-spacing:-.01em}
+  .step p{color:var(--muted);font-size:15px;margin-top:2px}
+  .pill{display:inline-block;margin-left:8px;padding:1px 10px;background:var(--lav);color:#7a5cb5;border-radius:999px;font-size:12px;font-weight:500;vertical-align:2px}
+  .foot-note{margin-top:6px;text-align:center;font-size:13px;color:var(--muted)}
+
+  /* places */
+  .places{display:grid;gap:14px;grid-template-columns:1fr}
+  @media(min-width:680px){.places{grid-template-columns:1fr 1fr}}
+  .place{
+    display:flex;align-items:center;gap:16px;
+    background:#fff;border-radius:24px;padding:18px 20px;text-decoration:none;
+    border:1.5px solid var(--line);box-shadow:0 12px 26px -20px rgba(217,96,139,.6);
+    transition:transform .2s ease,border-color .2s;
+  }
+  .place:hover,.place:focus-visible{transform:translateY(-3px);border-color:var(--pink-300)}
+  .place .n{
+    flex:none;width:42px;height:42px;border-radius:50%;
+    display:grid;place-items:center;background:var(--pink-100);color:var(--rose);font-weight:600;font-size:15px;
+  }
+  .place .txt{flex:1;min-width:0}
+  .place .name{display:block;font-size:17px;font-weight:600;letter-spacing:-.01em;line-height:1.3}
+  .place .desc{display:block;color:var(--muted);font-size:14px;margin-top:2px}
+  .place .go{flex:none;width:36px;height:36px;border-radius:50%;background:var(--pink-200);display:grid;place-items:center;transition:background .2s}
+  .place:hover .go{background:var(--rose)}
+  .go svg,.btn svg{width:16px;height:16px;fill:none;stroke:var(--ink);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .place:hover .go svg{stroke:#fff}
+
+  /* lunch ticket */
+  .ticket{
+    position:relative;border-radius:34px;overflow:hidden;
+    background:linear-gradient(160deg,#fff,#fff3f7);
+    border:2px dashed var(--pink-300);
+    box-shadow:var(--shadow);
+    padding:clamp(26px,5vw,48px);
+  }
+  .ticket .sp{opacity:.4}
+  .ticket .sp.t1{width:22px;right:8%;top:10%}
+  .ticket .sp.t2{width:12px;right:16%;top:24%;animation-delay:1.4s}
+  .kicker{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--rose);font-weight:500}
+  .price{font-size:clamp(76px,19vw,150px);font-weight:700;letter-spacing:-.05em;line-height:.95;margin:8px 0 4px}
+  .price .serif{font-size:.24em;letter-spacing:0;color:var(--rose);margin-left:12px}
+  .sub{color:var(--muted)}
+  .cols{display:grid;gap:28px;grid-template-columns:1fr;margin:30px 0 6px;padding-top:28px;border-top:2px dashed var(--pink-200)}
+  @media(min-width:680px){.cols{grid-template-columns:repeat(3,1fr)}}
+  .cols h4{margin:0 0 10px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:500;color:var(--rose)}
+  .cols li{font-size:16px;padding:4px 0}
+  .cols li small{color:var(--rose);font-size:13px;margin-left:4px;font-weight:500}
+  .cols .gap{margin-top:22px}
+  .fine{margin:18px 0 24px;font-size:13px;color:var(--muted);max-width:620px}
+  .btn{
+    display:inline-flex;align-items:center;gap:10px;text-decoration:none;
+    background:var(--rose);color:#fff;font-weight:500;font-size:15px;
+    padding:14px 26px;border-radius:999px;box-shadow:0 14px 24px -12px rgba(217,96,139,.8);
+    transition:transform .2s,background .2s;
+  }
+  .btn svg{stroke:#fff}
+  .btn:hover,.btn:focus-visible{transform:translateY(-2px);background:#c94f7b}
+
+  /* notes */
+  .notes{display:grid;gap:14px;grid-template-columns:1fr}
+  @media(min-width:680px){.notes{grid-template-columns:1fr 1fr}}
+  .notes li{background:#fff;border-radius:24px;padding:22px 24px;border:1.5px solid var(--line);color:var(--muted);font-size:15px}
+  .notes li strong{display:block;color:var(--ink);font-weight:600;font-size:17px;margin-bottom:4px}
+  .notes a{color:var(--rose)}
+
+  footer{position:relative;text-align:center;padding:84px 0 56px;color:var(--muted);font-size:14px}
+  footer .serif{display:block;font-size:34px;color:var(--rose);margin-bottom:6px}
+  footer .row{display:flex;gap:14px;justify-content:center;margin-bottom:16px}
+  footer .row svg{width:16px;fill:var(--pink-300)}
+  footer .row svg:nth-child(2){width:24px;fill:var(--rose)}
+
+  a:focus-visible{outline:2px solid var(--rose);outline-offset:3px;border-radius:12px}
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important}
+    html{scroll-behavior:auto}
+  }
+</style>
+</head>
+<body>
+
+<!-- shared icons -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="star" viewBox="0 0 24 24"><path d="M12 0C12 7 17 12 24 12C17 12 12 17 12 24C12 17 7 12 0 12C7 12 12 7 12 0Z"/></symbol>
+    <symbol id="bow" viewBox="0 0 48 48">
+      <path d="M24 24C12 9 2 13 4 24C2 35 12 39 24 24Z"/>
+      <path d="M24 24C36 9 46 13 44 24C46 35 36 39 24 24Z"/>
+      <path d="M21 27L14 45L22 40L24 46L26 40L34 45L27 27Z" opacity=".85"/>
+      <circle cx="24" cy="24" r="5"/>
+    </symbol>
+    <symbol id="arrow" viewBox="0 0 24 24"><path d="M7 17L17 7M8 7h9v9"/></symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <nav class="nav" aria-label="Primary">
+    <a class="brand" href="#top">BGC Gala</a>
+    <ul>
+      <li><a class="link" href="#dress">Dress code</a></li>
+      <li><a class="link" href="#plan">Plan</a></li>
+      <li><a class="link" href="#places">Places</a></li>
+      <li><a class="link" href="#lunch">Lunch</a></li>
+    </ul>
+  </nav>
+
+  <header class="hero" id="top">
+    <span class="blob b1"></span><span class="blob b2"></span>
+    <svg class="sp s1" aria-hidden="true"><use href="#star"/></svg>
+    <svg class="sp s2" aria-hidden="true"><use href="#star"/></svg>
+    <svg class="sp s3" aria-hidden="true"><use href="#star"/></svg>
+    <svg class="sp s4" aria-hidden="true"><use href="#star"/></svg>
+    <svg class="sp s5" aria-hidden="true"><use href="#star"/></svg>
+    <svg class="sp s6" aria-hidden="true"><use href="#star"/></svg>
+
+    <span class="date-chip"><svg aria-hidden="true"><use href="#star"/></svg>Saturday, October 24</span>
+    <h1>BGC<span class="serif">gala day</span></h1>
+    <p class="lead">A full day around Bonifacio Global City. Bus out at 8:00 AM from Waltermart Banlic.</p>
+
+    <div class="countdown" role="timer" aria-live="off" aria-label="Countdown to departure">
+      <div class="cd"><b id="cd-d">--</b><small>Days</small></div>
+      <div class="cd"><b id="cd-h">--</b><small>Hours</small></div>
+      <div class="cd"><b id="cd-m">--</b><small>Minutes</small></div>
+      <div class="cd"><b id="cd-s">--</b><small>Seconds</small></div>
+    </div>
+    <p id="cd-note">Until departure, 8:00 AM</p>
+  </header>
+
+  <main>
+    <!-- DRESS CODE -->
+    <section id="dress">
+      <div class="sec-head">
+        <span class="tiny"><svg aria-hidden="true"><use href="#star"/></svg>What to wear</span>
+        <h2>Dress <span class="serif">code</span></h2>
+      </div>
+      <div class="two">
+        <div class="dress g">
+          <svg class="bow" aria-hidden="true"><use href="#bow"/></svg>
+          <span class="label">Girls</span>
+          <h3>Disney <span class="serif">princess</span></h3>
+          <p>Pick a princess and build the look around her.</p>
+          <svg class="corner" aria-hidden="true"><use href="#star"/></svg>
+        </div>
+        <div class="dress b">
+          <svg class="bow" aria-hidden="true"><use href="#star"/></svg>
+          <span class="label">Boys</span>
+          <h3>Prince <span class="serif">themed</span></h3>
+          <p>No required color. Just keep it prince-inspired.</p>
+          <svg class="corner" aria-hidden="true"><use href="#star"/></svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- PLAN -->
+    <section id="plan">
+      <div class="sec-head">
+        <span class="tiny"><svg aria-hidden="true"><use href="#star"/></svg>Itinerary</span>
+        <h2>The <span class="serif">plan</span></h2>
+        <p>All times are estimates.</p>
+      </div>
+      <ol class="timeline">
+        <li class="step"><span class="t">8:00 AM</span><h3>Bus departs</h3><p>Waltermart Banlic. Be there a little early.</p></li>
+        <li class="step"><span class="t">About 10:30 AM</span><h3>Drop-off at Market Market</h3><p>Arrival depends on traffic.</p></li>
+        <li class="step"><span class="t">Late morning</span><h3>Breakfast and SM Aura</h3><p>SM Aura is the closest mall to the drop-off. Budget breakfast, then a walk around.</p></li>
+        <li class="step"><span class="t">Before lunch</span><h3>BGC High Street</h3><p>One Bonifacio High Street Park and the BGC 3D LED Screen.</p></li>
+        <li class="step"><span class="t">Lunch</span><h3>Italianni's</h3><p>The 385 All Yours All Day set. Details below.</p></li>
+        <li class="step"><span class="t">Afternoon</span><h3>The Mind Museum<span class="pill">Optional</span></h3><p>Open Tuesday to Sunday, 9 AM to 6 PM. Tickets are separate.</p></li>
+        <li class="step"><span class="t">Late afternoon</span><h3>Uptown Mall</h3><p>Rest, snacks, and browsing.</p></li>
+        <li class="step"><span class="t">Evening</span><h3>Venice Grand Canal Mall</h3><p>A short ride from BGC. Best once the lights are on.</p></li>
+        <li class="step"><span class="t">Night</span><h3>Head home</h3><p>Return schedule to be announced.</p></li>
+      </ol>
+    </section>
+
+    <!-- PLACES -->
+    <section id="places">
+      <div class="sec-head">
+        <span class="tiny"><svg aria-hidden="true"><use href="#star"/></svg>Open in Google Maps</span>
+        <h2>The <span class="serif">places</span></h2>
+      </div>
+      <div class="places">
+        <a class="place" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=Waltermart+Banlic+Calamba">
+          <span class="n">01</span><span class="txt"><span class="name">Waltermart Banlic</span><span class="desc">Bus departure, 8:00 AM</span></span>
+          <span class="go"><svg viewBox="0 0 24 24"><use href="#arrow"/></svg></span>
+        </a>
+        <a class="place" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=Market+Market+Taguig">
+          <span class="n">02</span><span class="txt"><span class="name">Market Market</span><span class="desc">Drop-off point</span></span>
+          <span class="go"><svg viewBox="0 0 24 24"><use href="#arrow"/></svg></span>
+        </a>
+        <a class="place" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=SM+Aura+Premier+Taguig">
+          <span class="n">03</span><span class="txt"><span class="name">SM Aura</span><span class="desc">Breakfast and photos</span></span>
+          <span class="go"><svg viewBox="0 0 24 24"><use href="#arrow"/></svg></span>
+        </a>
+        <a class="place" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=Bonifacio+High+Street+Taguig">
+          <span class="n">04</span><span class="txt"><span class="name">Bonifacio High Street</span><span class="desc">Walk, shops, and lunch</span></span>
+          <span class="go"><svg viewBox="0 0 24 24"><use href="#arrow"/></svg></span>
+        </a>
+        <a class="place" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=One+Bonifacio+High+Street+Park+Taguig">
+          <span class="n">05</span><span class="txt"><span class="name">One Bonifacio High Street Park</span><span class="desc">Green space in the city</span></span>
+          <span class="go"><svg viewBox="0 0 24 24"><use href="#arrow"/></svg></span>
+        </a>
+        <a class="place" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=BGC+3D+LED+Screen+Taguig">
+          <span class="n">06</span><span class="txt"><span class="name">BGC 3D LED Screen and Public Art</span><span class="desc">Photo spot</span></span>
+          <span class="go"><svg viewBox="0 0 24 24"><use href="#arrow"/></svg></span>
+        </a>
+        <a class="place" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=The+Mind+Museum+Taguig">
+          <span class="n">07</span><span class="txt"><span class="name">The Mind Museum</span><span class="desc">JY Campos Park, 3rd Avenue. Optional</span></span>
+          <span class="go"><svg viewBox="0 0 24 24"><use href="#arrow"/></svg></span>
+        </a>
+        <a class="place" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=Uptown+Place+Mall+Taguig">
+          <span class="n">08</span><span class="txt"><span class="name">Uptown Mall</span><span class="desc">9th Ave corner 36th St</span></span>
+          <span class="go"><svg viewBox="0 0 24 24"><use href="#arrow"/></svg></span>
+        </a>
+        <a class="place" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=Venice+Grand+Canal+Mall+Taguig">
+          <span class="n">09</span><span class="txt"><span class="name">Venice Grand Canal Mall</span><span class="desc">McKinley Hill. Evening stop</span></span>
+          <span class="go"><svg viewBox="0 0 24 24"><use href="#arrow"/></svg></span>
+        </a>
+      </div>
+    </section>
+
+    <!-- LUNCH -->
+    <section id="lunch">
+      <div class="sec-head">
+        <span class="tiny"><svg aria-hidden="true"><use href="#star"/></svg>Lunch stop</span>
+        <h2>Italianni's <span class="serif">promo</span></h2>
+      </div>
+      <div class="ticket">
+        <svg class="sp t1" aria-hidden="true"><use href="#star"/></svg>
+        <svg class="sp t2" aria-hidden="true"><use href="#star"/></svg>
+        <span class="kicker">All Yours All Day, Season 4</span>
+        <div class="price">385<span class="serif">per set</span></div>
+        <p class="sub">Starter, entrée, and beverage. Available in every branch.</p>
+
+        <div class="cols">
+          <div>
+            <h4>Starter, pick one</h4>
+            <ul>
+              <li>Side Caesar Salad</li>
+              <li>Carrot Soup</li>
+              <li>Pepperoni Pizzetta</li>
+              <li>Chicken Fingers and Chips <small>+50</small></li>
+            </ul>
+          </div>
+          <div>
+            <h4>Entrée, pick one</h4>
+            <ul>
+              <li>Grilled Porkloin</li>
+              <li>Pork Adobo Rice</li>
+              <li>Chicken Parmigiana <small>+90</small></li>
+              <li>Seafood Vegetables and Rice <small>+120</small></li>
+            </ul>
+          </div>
+          <div>
+            <h4>Drink, pick one</h4>
+            <ul>
+              <li>House Blend Iced Tea</li>
+              <li>Bottomless iced tea <small>+50</small></li>
+              <li>Blushing Fizzy Tea <small>+90</small></li>
+            </ul>
+            <h4 class="gap">Dessert, optional</h4>
+            <ul>
+              <li>Affogato <small>+80</small></li>
+              <li>Double Espresso Cake <small>+120</small></li>
+            </ul>
+          </div>
+        </div>
+
+        <p class="fine">Dine-in only. Not valid with other discounts, including BFF. The regular menu lists prices as subject to a 10% service charge, so expect a little over 385 per person.</p>
+        <a class="btn" target="_blank" rel="noopener" href="https://italiannis.com.ph/menu/Italiannis-Menu-09-30-26_fixed.pdf">
+          View full menu
+          <svg viewBox="0 0 24 24"><use href="#arrow"/></svg>
+        </a>
+      </div>
+    </section>
+
+    <!-- NOTES -->
+    <section id="notes">
+      <div class="sec-head">
+        <span class="tiny"><svg aria-hidden="true"><use href="#star"/></svg>Before we go</span>
+        <h2>Good to <span class="serif">know</span></h2>
+      </div>
+      <ul class="notes">
+        <li><strong>Bring</strong>Water, a powerbank, and comfortable shoes. We walk a lot.</li>
+        <li><strong>Budget</strong>Food, fare inside BGC, and the Mind Museum ticket if you join.</li>
+        <li><strong>Timing</strong>The bus leaves at 8:00 AM. Please arrive early.</li>
+        <li><strong>Museum tickets</strong><a href="https://www.themindmuseum.org/buy-tickets" target="_blank" rel="noopener">themindmuseum.org/buy-tickets</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <div class="row" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><use href="#star"/></svg>
+      <svg viewBox="0 0 24 24"><use href="#star"/></svg>
+      <svg viewBox="0 0 24 24"><use href="#star"/></svg>
+    </div>
+    <span class="serif">See you on October 24</span>
+    BGC gala day
+  </footer>
+</div>
+
+<script>
+(function(){
+  var target = new Date("2026-10-24T08:00:00+08:00").getTime();
+  var d=document.getElementById("cd-d"),
+      h=document.getElementById("cd-h"),
+      m=document.getElementById("cd-m"),
+      s=document.getElementById("cd-s"),
+      note=document.getElementById("cd-note");
+  function pad(n){return String(n).padStart(2,"0")}
+  function tick(){
+    var diff = target - Date.now();
+    if(diff <= 0){
+      d.textContent=h.textContent=m.textContent=s.textContent="00";
+      note.textContent = (Date.now() - target) < 24*3600*1000
+        ? "It's gala day."
+        : "Thanks for coming along.";
+      return;
+    }
+    var sec = Math.floor(diff/1000);
+    d.textContent = pad(Math.floor(sec/86400));
+    h.textContent = pad(Math.floor(sec%86400/3600));
+    m.textContent = pad(Math.floor(sec%3600/60));
+    s.textContent = pad(sec%60);
+  }
+  tick();
+  setInterval(tick,1000);
+})();
+</script>
+</body>
+</html>
