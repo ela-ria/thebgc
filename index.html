@@ -6,6 +6,14 @@
 <title>BGC Gala Day</title>
 <meta name="description" content="BGC gala day. Saturday, October 24, 2026. Dress code, itinerary, places and lunch plan.">
 <meta name="theme-color" content="#ffd1df">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23d9608b' d='M12 0C12 7 17 12 24 12C17 12 12 17 12 24C12 17 7 12 0 12C7 12 12 7 12 0Z'/%3E%3C/svg%3E">
+<meta property="og:type" content="website">
+<meta property="og:title" content="BGC Gala Day, October 24">
+<meta property="og:description" content="Dress code, itinerary, places, lunch promo and budget for our BGC gala day.">
+<meta property="og:locale" content="en_PH">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="BGC Gala Day, October 24">
+<meta name="twitter:description" content="Dress code, itinerary, places, lunch promo and budget for our BGC gala day.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@1,500;1,600&display=swap" rel="stylesheet">
@@ -165,6 +173,10 @@
   .step p{color:var(--muted);font-size:15px;margin-top:2px}
   .pill{display:inline-block;margin-left:8px;padding:1px 10px;background:var(--lav);color:#7a5cb5;border-radius:999px;font-size:12px;font-weight:500;vertical-align:2px}
   .foot-note{margin-top:6px;text-align:center;font-size:13px;color:var(--muted)}
+  .leg{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:14px;padding-top:12px;border-top:2px dashed var(--pink-200);font-size:13px;color:var(--muted)}
+  .leg .from{color:var(--ink);font-weight:500}
+  .leg a{margin-left:auto;color:var(--rose);font-weight:500;text-decoration:none;white-space:nowrap}
+  .leg a:hover,.leg a:focus-visible{text-decoration:underline}
 
   /* places */
   .places{display:grid;gap:14px;grid-template-columns:1fr}
@@ -219,6 +231,46 @@
   .btn svg{stroke:#fff}
   .btn:hover,.btn:focus-visible{transform:translateY(-2px);background:#c94f7b}
 
+  /* calendar buttons */
+  .cal{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:22px}
+  .btn.light{background:#fff;color:var(--rose);border:1.5px solid var(--pink-300);box-shadow:none}
+  .btn.light:hover,.btn.light:focus-visible{background:var(--pink-100)}
+  .btn.light svg{stroke:var(--rose)}
+  button.btn{font-family:inherit;cursor:pointer;border:0}
+  button.btn.light{border:1.5px solid var(--pink-300)}
+
+  /* outfit idea links */
+  .idea{display:inline-flex;align-items:center;gap:6px;margin-top:16px;font-size:14px;font-weight:500;color:var(--rose);text-decoration:none}
+  .idea svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .dress.b .idea{color:#8466c0}
+  .idea:hover,.idea:focus-visible{text-decoration:underline}
+
+  /* budget */
+  .budget{background:#fff;border-radius:var(--radius);padding:8px 28px;border:1.5px solid var(--line);box-shadow:var(--shadow)}
+  .b-row{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:16px 0;border-bottom:1px solid var(--line)}
+  .b-row .what{font-weight:500}
+  .b-row .what small{display:block;color:var(--muted);font-weight:400;font-size:13px}
+  .b-row .amt{font-weight:600;white-space:nowrap}
+  .b-row.total{border-bottom:0;padding-top:20px}
+  .b-row.total .what{font-family:"Playfair Display",serif;font-style:italic;font-size:24px;color:var(--rose)}
+  .b-row.total .amt{font-size:28px;color:var(--rose);letter-spacing:-.02em}
+  .tipid{margin-top:14px;background:var(--pink-100);border-radius:24px;padding:20px 24px;font-size:15px}
+  .tipid strong{display:block;margin-bottom:4px}
+  .tipid ul{margin-top:8px;padding-left:18px;list-style:disc;color:var(--muted)}
+  .tipid li{padding:2px 0}
+
+  /* packing + rain */
+  .check{display:grid;gap:10px;grid-template-columns:1fr}
+  @media(min-width:680px){.check{grid-template-columns:1fr 1fr}}
+  .check label{display:flex;align-items:center;gap:12px;background:#fff;border:1.5px solid var(--line);border-radius:20px;padding:14px 18px;cursor:pointer;transition:border-color .2s,color .2s}
+  .check input{appearance:none;-webkit-appearance:none;flex:none;width:22px;height:22px;border-radius:8px;border:2px solid var(--pink-300);background:#fff;display:grid;place-content:center;margin:0;cursor:pointer}
+  .check input::after{content:"";width:10px;height:10px;border-radius:3px;background:var(--rose);transform:scale(0);transition:transform .15s}
+  .check input:checked::after{transform:scale(1)}
+  .check input:focus-visible{outline:2px solid var(--rose);outline-offset:2px}
+  .check label:has(input:checked){border-color:var(--pink-300);color:var(--muted);text-decoration:line-through}
+  .rain{margin-top:14px;background:var(--lav);border-radius:24px;padding:22px 24px;font-size:15px}
+  .rain strong{display:block;margin-bottom:4px}
+
   /* notes */
   .notes{display:grid;gap:14px;grid-template-columns:1fr}
   @media(min-width:680px){.notes{grid-template-columns:1fr 1fr}}
@@ -263,6 +315,7 @@
       <li><a class="link" href="#plan">Plan</a></li>
       <li><a class="link" href="#places">Places</a></li>
       <li><a class="link" href="#lunch">Lunch</a></li>
+      <li><a class="link" href="#budget">Budget</a></li>
     </ul>
   </nav>
 
@@ -277,7 +330,7 @@
 
     <span class="date-chip"><svg aria-hidden="true"><use href="#star"/></svg>Saturday, October 24</span>
     <h1>BGC<span class="serif">gala day</span></h1>
-    <p class="lead">A full day around Bonifacio Global City. Bus out at 8:00 AM from Waltermart Banlic.</p>
+    <p class="lead">A full day around Bonifacio Global City. Bus out at 8:00 AM from Waltermart Banlic, back on the bus around 5 to 6 PM.</p>
 
     <div class="countdown" role="timer" aria-live="off" aria-label="Countdown to departure">
       <div class="cd"><b id="cd-d">--</b><small>Days</small></div>
@@ -286,6 +339,13 @@
       <div class="cd"><b id="cd-s">--</b><small>Seconds</small></div>
     </div>
     <p id="cd-note">Until departure, 8:00 AM</p>
+    <div class="cal">
+      <a class="btn" target="_blank" rel="noopener" href="https://calendar.google.com/calendar/render?action=TEMPLATE&amp;text=BGC+Gala+Day&amp;dates=20261024T080000/20261024T180000&amp;ctz=Asia/Manila&amp;details=Bus+leaves+Waltermart+Banlic+at+8%3A00+AM.+Return+around+5+to+6+PM.&amp;location=Waltermart+Banlic%2C+Calamba">
+        Add to Google Calendar
+        <svg viewBox="0 0 24 24"><use href="#arrow"/></svg>
+      </a>
+      <button class="btn light" type="button" id="ics">Download .ics</button>
+    </div>
   </header>
 
   <main>
@@ -301,6 +361,7 @@
           <span class="label">Girls</span>
           <h3>Disney <span class="serif">princess</span></h3>
           <p>Pick a princess and build the look around her.</p>
+          <a class="idea" target="_blank" rel="noopener" href="https://www.pinterest.com/search/pins/?q=disney%20princess%20outfit%20ideas">Outfit ideas <svg viewBox="0 0 24 24"><use href="#arrow"/></svg></a>
           <svg class="corner" aria-hidden="true"><use href="#star"/></svg>
         </div>
         <div class="dress b">
@@ -308,6 +369,7 @@
           <span class="label">Boys</span>
           <h3>Prince <span class="serif">themed</span></h3>
           <p>No required color. Just keep it prince-inspired.</p>
+          <a class="idea" target="_blank" rel="noopener" href="https://www.pinterest.com/search/pins/?q=disney%20prince%20outfit%20ideas%20men">Outfit ideas <svg viewBox="0 0 24 24"><use href="#arrow"/></svg></a>
           <svg class="corner" aria-hidden="true"><use href="#star"/></svg>
         </div>
       </div>
@@ -323,13 +385,19 @@
       <ol class="timeline">
         <li class="step"><span class="t">8:00 AM</span><h3>Bus departs</h3><p>Waltermart Banlic. Be there a little early.</p></li>
         <li class="step"><span class="t">About 10:30 AM</span><h3>Drop-off at Market Market</h3><p>Arrival depends on traffic.</p></li>
-        <li class="step"><span class="t">Late morning</span><h3>Breakfast and SM Aura</h3><p>SM Aura is the closest mall to the drop-off. Budget breakfast, then a walk around.</p></li>
-        <li class="step"><span class="t">Before lunch</span><h3>BGC High Street</h3><p>One Bonifacio High Street Park and the BGC 3D LED Screen.</p></li>
-        <li class="step"><span class="t">Lunch</span><h3>Italianni's</h3><p>The 385 All Yours All Day set. Details below.</p></li>
-        <li class="step"><span class="t">Afternoon</span><h3>The Mind Museum<span class="pill">Optional</span></h3><p>Open Tuesday to Sunday, 9 AM to 6 PM. Tickets are separate.</p></li>
-        <li class="step"><span class="t">Late afternoon</span><h3>Uptown Mall</h3><p>Rest, snacks, and browsing.</p></li>
-        <li class="step"><span class="t">Evening</span><h3>Venice Grand Canal Mall</h3><p>A short ride from BGC. Best once the lights are on.</p></li>
-        <li class="step"><span class="t">Night</span><h3>Head home</h3><p>Return schedule to be announced.</p></li>
+        <li class="step"><span class="t">Late morning</span><h3>Breakfast and SM Aura</h3><p>SM Aura is the closest mall to the drop-off. Budget breakfast, then a walk around.</p>
+          <div class="leg"><span class="from">From Market Market</span><span>about 5 to 10 min walk</span><a target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&amp;origin=Market+Market+Taguig&amp;destination=SM+Aura+Premier+Taguig&amp;travelmode=walking">Directions</a></div></li>
+        <li class="step"><span class="t">Before lunch</span><h3>BGC High Street</h3><p>One Bonifacio High Street Park and the BGC 3D LED Screen, all around the same area.</p>
+          <div class="leg"><span class="from">From SM Aura</span><span>about 1.5 km, 15 to 20 min walk</span><a target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&amp;origin=SM+Aura+Premier+Taguig&amp;destination=Bonifacio+High+Street+Taguig&amp;travelmode=walking">Directions</a></div></li>
+        <li class="step"><span class="t">Lunch</span><h3>Italianni's</h3><p>The 385 All Yours All Day set. Details below.</p>
+          <div class="leg"><span class="from">From the High Street walk</span><span>a few minutes on foot</span><a target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&amp;origin=Bonifacio+High+Street+Taguig&amp;destination=Italianni%27s+Bonifacio+High+Street&amp;travelmode=walking">Directions</a></div></li>
+        <li class="step"><span class="t">Afternoon</span><h3>The Mind Museum<span class="pill">Optional</span></h3><p>Open Tuesday to Sunday, 9 AM to 6 PM. Tickets are separate. A visit usually takes 2 to 3 hours, so skip it if we're short on time.</p>
+          <div class="leg"><span class="from">From Italianni's</span><span>about 10 to 15 min walk</span><a target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&amp;origin=Italianni%27s+Bonifacio+High+Street&amp;destination=The+Mind+Museum+Taguig&amp;travelmode=walking">Directions</a></div></li>
+        <li class="step"><span class="t">Afternoon</span><h3>Uptown Mall</h3><p>Rest, snacks, and browsing.</p>
+          <div class="leg"><span class="from">From High Street or the Mind Museum</span><span>about 10 to 20 min walk</span><a target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&amp;origin=Bonifacio+High+Street+Taguig&amp;destination=Uptown+Place+Mall+Taguig&amp;travelmode=walking">Directions</a></div></li>
+        <li class="step"><span class="t">Late afternoon</span><h3>Venice Grand Canal Mall</h3><p>A short ride from BGC. Canal views and photos before we head back.</p>
+          <div class="leg"><span class="from">From Uptown Mall</span><span>about 3 to 4 km, 10 to 20 min by Grab or taxi. Too far to walk.</span><a target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&amp;origin=Uptown+Place+Mall+Taguig&amp;destination=Venice+Grand+Canal+Mall+Taguig&amp;travelmode=driving">Directions</a></div></li>
+        <li class="step"><span class="t">5 to 6 PM</span><h3>Head home</h3><p>Return bus leaves around 5 to 6 PM. Pickup point to be announced.</p></li>
       </ol>
     </section>
 
@@ -373,7 +441,7 @@
           <span class="go"><svg viewBox="0 0 24 24"><use href="#arrow"/></svg></span>
         </a>
         <a class="place" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=Venice+Grand+Canal+Mall+Taguig">
-          <span class="n">09</span><span class="txt"><span class="name">Venice Grand Canal Mall</span><span class="desc">McKinley Hill. Evening stop</span></span>
+          <span class="n">09</span><span class="txt"><span class="name">Venice Grand Canal Mall</span><span class="desc">McKinley Hill. Last stop</span></span>
           <span class="go"><svg viewBox="0 0 24 24"><use href="#arrow"/></svg></span>
         </a>
       </div>
@@ -434,6 +502,53 @@
       </div>
     </section>
 
+    <!-- BUDGET -->
+    <section id="budget">
+      <div class="sec-head">
+        <span class="tiny"><svg aria-hidden="true"><use href="#star"/></svg>Per person</span>
+        <h2>Budget <span class="serif">plan</span></h2>
+        <p>Tipid version. All amounts are estimates.</p>
+      </div>
+      <div class="budget">
+        <div class="b-row"><span class="what">Bus fare, round trip<small>160 each way</small></span><span class="amt">₱320</span></div>
+        <div class="b-row"><span class="what">Breakfast<small>Jollibee or similar</small></span><span class="amt">₱120</span></div>
+        <div class="b-row"><span class="what">Lunch at Italianni's<small>385 set plus 10% service charge, no add-ons</small></span><span class="amt">₱424</span></div>
+        <div class="b-row"><span class="what">Getting around BGC<small>Mostly walking. Shared Grab from Uptown to Venice</small></span><span class="amt">₱50</span></div>
+        <div class="b-row"><span class="what">Water and snacks<small>Bring a refillable bottle to keep this low</small></span><span class="amt">₱80</span></div>
+        <div class="b-row total"><span class="what">Total</span><span class="amt">about ₱1,000</span></div>
+      </div>
+      <div class="tipid">
+        <strong>Good to plan for</strong>
+        Bring around ₱1,200 so there's a little cushion.
+        <ul>
+          <li>Not included: Mind Museum ticket (check their website for the price).</li>
+          <li>Optional add-ons at Italianni's: dessert 80 to 120, bottomless iced tea 50.</li>
+          <li>The Grab share depends on how many of us ride together.</li>
+          <li>To save more: skip the add-ons, bring your own water, and skip the museum.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- PACKING + RAIN -->
+    <section id="pack">
+      <div class="sec-head">
+        <span class="tiny"><svg aria-hidden="true"><use href="#star"/></svg>Don't forget</span>
+        <h2>Pack <span class="serif">list</span></h2>
+      </div>
+      <div class="check" id="packlist">
+        <label><input type="checkbox">Refillable water bottle</label>
+        <label><input type="checkbox">Powerbank and charger</label>
+        <label><input type="checkbox">Umbrella or light raincoat</label>
+        <label><input type="checkbox">Cash and e-wallet</label>
+        <label><input type="checkbox">Comfortable walking shoes</label>
+        <label><input type="checkbox">Outfit ready the night before</label>
+      </div>
+      <div class="rain">
+        <strong>If it rains</strong>
+        Most of our stops are malls, so we can move indoors. The outdoor photo stops, like the park and the LED screen, are the ones to shorten or skip. Keep an umbrella handy for the walks between stops.
+      </div>
+    </section>
+
     <!-- NOTES -->
     <section id="notes">
       <div class="sec-head">
@@ -441,9 +556,11 @@
         <h2>Good to <span class="serif">know</span></h2>
       </div>
       <ul class="notes">
-        <li><strong>Bring</strong>Water, a powerbank, and comfortable shoes. We walk a lot.</li>
+        <li><strong>Bring</strong>Water, a powerbank, and comfortable shoes, and pamaypay or fan. We walk a lot.</li>
         <li><strong>Budget</strong>Food, fare inside BGC, and the Mind Museum ticket if you join.</li>
-        <li><strong>Timing</strong>The bus leaves at 8:00 AM. Please arrive early.</li>
+        <li><strong>Timing</strong>The bus leaves at 8:00 AM and the return is around 5 to 6 PM. Please arrive early.</li>
+        <li><strong>Getting around</strong>Legs over 15 minutes can feel long in the heat. Grab or the BGC bus help; the Mind Museum site lists the BGC Central bus from the Market Market terminal.</li>
+        <li><strong>Distances</strong>Walking times are estimates. Tap Directions on each stop for the live route.</li>
         <li><strong>Museum tickets</strong><a href="https://www.themindmuseum.org/buy-tickets" target="_blank" rel="noopener">themindmuseum.org/buy-tickets</a></li>
       </ul>
     </section>
@@ -486,6 +603,37 @@
   }
   tick();
   setInterval(tick,1000);
+
+  // download .ics (Apple Calendar, Outlook, etc.)
+  var icsBtn = document.getElementById("ics");
+  if(icsBtn){
+    icsBtn.addEventListener("click", function(){
+      var lines = [
+        "BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//BGC Gala//EN","BEGIN:VEVENT",
+        "UID:bgc-gala-20261024@thebgc","DTSTAMP:20261013T000000Z",
+        "DTSTART:20261024T000000Z","DTEND:20261024T100000Z",
+        "SUMMARY:BGC Gala Day","LOCATION:Waltermart Banlic\\, Calamba",
+        "DESCRIPTION:Bus leaves Waltermart Banlic at 8:00 AM. Return around 5 to 6 PM.",
+        "BEGIN:VALARM","TRIGGER:-PT90M","ACTION:DISPLAY","DESCRIPTION:BGC Gala Day","END:VALARM",
+        "END:VEVENT","END:VCALENDAR"
+      ];
+      var blob = new Blob([lines.join("\r\n")], {type:"text/calendar"});
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "bgc-gala-day.ics";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){URL.revokeObjectURL(a.href)}, 1000);
+    });
+  }
+
+  // remember pack list ticks on this device only
+  var boxes = document.querySelectorAll("#packlist input");
+  boxes.forEach(function(box, i){
+    try{ box.checked = localStorage.getItem("bgc-pack-"+i) === "1"; }catch(e){}
+    box.addEventListener("change", function(){
+      try{ localStorage.setItem("bgc-pack-"+i, box.checked ? "1" : "0"); }catch(e){}
+    });
+  });
 })();
 </script>
 </body>
