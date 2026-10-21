@@ -1,0 +1,94 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isMe(uid) { return signedIn() && request.auth.uid == uid; }
+
+    // nickname + RSVP; each person edits only their own
+    match /members/{uid} {
+      allow read: if signedIn();
+      allow create, update: if isMe(uid)
+        && request.resource.data.nickname is string
+        && request.resource.data.nickname.size() > 0
+        && request.resource.data.nickname.size() <= 24
+        && request.resource.data.going is bool
+        && (!('photo' in request.resource.data)
+            || (request.resource.data.photo is string && request.resource.data.photo.size() < 40000));
+      allow delete: if isMe(uid);
+    }
+
+    // who has the site open right now; each person updates only their own
+    match /presence/{uid} {
+      allow read: if signedIn();
+      allow create, update: if isMe(uid) && request.resource.data.at is number;
+      allow delete: if isMe(uid);
+    }
+
+    // per-stop photo duty and done tick; anyone in the squad can change
+    match /steps/{key} {
+      allow read: if signedIn();
+      allow create, update: if signedIn();
+    }
+
+    // thumbnails; only the uploader can remove theirs
+    match /photos/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.by == request.auth.uid
+        && request.resource.data.thumb is string
+        && request.resource.data.thumb.size() < 200000;
+      allow delete: if signedIn() && resource.data.by == request.auth.uid;
+    }
+
+    // squad chat; anyone signed in posts as themselves, only the sender can delete
+    match /chat/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.by == request.auth.uid
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 500;
+      allow delete: if signedIn() && resource.data.by == request.auth.uid;
+    }
+
+    // live map; each person writes only their own pin, and the map closes
+    // at 8:00 AM Philippine time on October 25 (midnight UTC)
+    match /locations/{uid} {
+      allow read: if signedIn() && request.time < timestamp.date(2026, 10, 25);
+      allow create, update: if isMe(uid)
+        && request.time < timestamp.date(2026, 10, 25)
+        && request.resource.data.lat is number
+        && request.resource.data.lng is number;
+      allow delete: if isMe(uid);
+    }
+
+    // video POVs, stored in pieces; only the uploader can add or remove theirs
+    match /videoChunks/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.by == request.auth.uid
+        && request.resource.data.data is string
+        && request.resource.data.data.size() <= 750000;
+      allow delete: if signedIn() && resource.data.by == request.auth.uid;
+    }
+
+    // birthday wishes for Jaspher; one per person, editable by its writer
+    match /wishes/{uid} {
+      allow read: if signedIn();
+      allow create, update: if isMe(uid)
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 600;
+      allow delete: if isMe(uid);
+    }
+
+    // full-size photos, opened in the viewer
+    match /photoFull/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.by == request.auth.uid
+        && request.resource.data.full is string;
+      allow delete: if signedIn() && resource.data.by == request.auth.uid;
+    }
+  }
+}
