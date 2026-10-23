@@ -24,6 +24,13 @@ service cloud.firestore {
       allow delete: if isMe(uid);
     }
 
+    // chat "seen": the newest message time each person has seen; each writes only their own
+    match /seen/{uid} {
+      allow read: if signedIn();
+      allow create, update: if isMe(uid) && request.resource.data.at is number;
+      allow delete: if isMe(uid);
+    }
+
     // per-stop photo duty and done tick; anyone in the squad can change
     match /steps/{key} {
       allow read: if signedIn();

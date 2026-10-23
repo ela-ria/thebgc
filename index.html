@@ -485,6 +485,18 @@
     <button class="chat-newpill" type="button" id="chat-newpill" hidden>New messages ↓</button>
   </div>
   <p class="chat-lock" id="chat-lock">Add your nickname first to chat.</p>
+  <div class="chat-sheet" id="chat-sheet" hidden>
+    <div class="sheet-card" role="dialog" aria-labelledby="sheet-title">
+      <div class="sheet-grip" aria-hidden="true"></div>
+      <div class="sheet-head">
+        <b id="sheet-title"></b>
+        <button class="chat-x" type="button" id="sheet-close" aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <div class="sheet-body" id="sheet-body"></div>
+    </div>
+  </div>
   <div class="chat-compose">
     <div class="chat-quick" id="chat-quick" hidden></div>
     <div class="mention-list" id="mention-list" role="listbox" aria-label="Mention someone" hidden></div>
@@ -513,6 +525,7 @@
 </section>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@twemoji/api@15.1.0/dist/twemoji.min.js" crossorigin="anonymous"></script>
 <script src="main.js"></script>
 <script type="module" src="checkins.js"></script>
 <div class="overlay" id="chat-viewer" hidden>

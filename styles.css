@@ -778,3 +778,45 @@ label.linkbtn{position:relative}
 .banner-txt span:empty{display:none}
 /* short status toasts: rounded card, never a circle */
 .toast{border-radius:16px;line-height:1.4;max-width:min(380px,calc(100% - 32px))}
+
+/* Twemoji images sit inline like text */
+img.emo{display:inline-block;width:1.15em;height:1.15em;margin:0 .04em;vertical-align:-.2em}
+.msg.big img.emo{width:1.05em;height:1.05em}
+.act-emoji img.emo,.emoji-grid img.emo{width:26px;height:26px;margin:0;vertical-align:middle}
+.react-chip img.emo{width:16px;height:16px;vertical-align:-3px}
+.sheet-emoji img.emo{width:24px;height:24px}
+
+/* "+" for more reactions */
+.act-emoji .more{font:600 20px/1 "Outfit",system-ui,sans-serif;color:var(--rose);width:36px;height:36px;padding:0;background:var(--pink-100)}
+
+/* bottom sheet inside the chat */
+.chat-sheet{position:absolute;inset:0;z-index:20;display:flex;align-items:flex-end;background:rgba(29,18,24,0);transition:background .22s ease;border-radius:inherit;overflow:hidden}
+.chat-sheet.open{background:rgba(29,18,24,.32)}
+.sheet-card{width:100%;max-height:72%;display:flex;flex-direction:column;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -12px 30px -12px rgba(59,36,48,.35);
+  transform:translateY(100%);transition:transform .28s cubic-bezier(.2,.9,.25,1)}
+.chat-sheet.open .sheet-card{transform:none}
+.sheet-grip{width:40px;height:4px;border-radius:4px;background:var(--line);margin:8px auto 0}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;padding:8px 14px 8px 18px}
+.sheet-head b{font-size:16px;font-weight:600}
+.sheet-body{overflow-y:auto;overscroll-behavior:contain;padding:0 12px 16px}
+.sheet-label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:10px 6px 6px}
+.emoji-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:2px}
+.emoji-grid button{height:44px;font-size:26px;line-height:1;background:none;border:0;border-radius:12px;cursor:pointer;transition:transform .14s cubic-bezier(.2,1.6,.4,1),background .12s}
+.emoji-grid button:hover,.emoji-grid button:focus-visible{background:var(--pink-100);transform:scale(1.15);outline:none}
+.emoji-grid button.on{background:var(--pink-200)}
+.sheet-person{display:flex;align-items:center;gap:10px;padding:9px 8px;border-radius:14px}
+.sheet-person .ava{width:34px;height:34px;font-size:14px}
+.sheet-person.tap{cursor:pointer}
+.sheet-person.tap:hover{background:var(--pink-50)}
+.sheet-name{flex:1;min-width:0;display:grid;font-size:15px;font-weight:500}
+.sheet-name small{font-size:12px;font-weight:400;color:var(--muted)}
+.sheet-emoji{font-size:22px}
+
+/* seen faces under a message */
+.seen-row{display:flex;align-items:center;justify-content:flex-start;gap:0;margin:3px 0 0 32px;padding:2px 4px;background:none;border:0;cursor:pointer;align-self:flex-start;animation:trayIn .25s ease}
+.seen-row.mine{align-self:flex-end;margin:3px 6px 0 0}
+.ava.tiny{width:16px;height:16px;font-size:8px;border-width:1.5px;margin-left:-4px;box-shadow:none}
+.ava.tiny:first-child{margin-left:0}
+.ava.tiny.online::after{display:none}
+.seen-more{font-size:10px;color:var(--muted);margin-left:4px}
+.seen-row:focus-visible{outline:2px solid var(--rose);border-radius:8px}

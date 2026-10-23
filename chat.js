@@ -1,7 +1,7 @@
 // squad chat: nicknames, replies, reactions, photos, @mentions, and birthday confetti
 import { configured, db, idToken } from "./firebase.js";
 import { squad, onSquad, nick, isMember, notify, notifState, enableNotifs, avatarEl, onlineIds, isOnline, toast } from "./squad.js";
-import { collection, addDoc, doc, updateDoc, deleteDoc, deleteField, onSnapshot, query, orderBy, limitToLast } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { collection, addDoc, doc, setDoc, updateDoc, deleteDoc, deleteField, onSnapshot, query, orderBy, limitToLast } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const $ = (id) => document.getElementById(id);
 const fab = $("chat-fab"), badge = $("chat-badge"), panel = $("chat-panel"), list = $("chat-list");
@@ -9,6 +9,20 @@ const form = $("chat-form"), input = $("chat-input"), send = $("chat-send"), loc
 const notifBtn = $("chat-notif"), notifNote = $("chat-notif-note"), newPill = $("chat-newpill");
 const QUICK = ["Happy birthday, Jaspher! 🎂", "@ElaAI ano next natin?", "Nasaan na kayo?", "Nandito na ako!", "Wait lang, papunta na!", "CR lang saglit", "Kain na tayo!"];
 const REACTS = ["😂", "❤️", "😮", "😢", "👍", "🎂"];
+// the "+" picker: more reactions, Telegram-style
+const MORE_EMOJI = [
+  ["Faces", "😂🤣😭🥹😍🥰😘😊😁😆😅🙂😉😎🤩🥳😏😌😴🤤😋😛😜🤪🤭🤫🤔🫣😬🙄😤😡🤯😱😳🥺😢😩😫🤧🤒🤮💀👻🤡🙈"],
+  ["Hearts", "❤️🩷🧡💛💚🩵💙💜🤍🖤💖💗💓💞💕💘💝❣️💔"],
+  ["Hands", "👍👎👏🙌🫶🙏🤝💪👌🤌🤞✌️🤙👋🫡💅"],
+  ["Party", "🎂🎉🎊🎁🎈✨⭐🌟💫🔥💯👑💎🌸🌷🫧"],
+  ["Food & trip", "🍗🍝🍕🍟🍔🧋☕🍰🍦🍫🚌🚗📍📸🛍️👗👠"]
+];
+const splitEmoji = (str) => typeof Intl !== "undefined" && Intl.Segmenter
+  ? [...new Intl.Segmenter(undefined, { granularity:"grapheme" }).segment(str)].map((x) => x.segment)
+  : Array.from(str);
+// same-looking emoji on every phone (Twemoji images; Apple's own emoji designs can't be used on websites)
+const TWEMOJI = { base:"https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/", folder:"svg", ext:".svg", className:"emo" };
+function emojify(el){ try{ if(window.twemoji) window.twemoji.parse(el, TWEMOJI); }catch(e){} return el; }
 const BDAY = /\b(hbd|happy\s*b(irth)?day|happy\s*bday|maligayang\s*kaarawan)\b|🎂|🥳/i;
 const EMOJI_ONLY = /^(?:\p{Extended_Pictographic}|\p{Emoji_Modifier}|️|‍|\s)+$/u;
 const GROUP_MS = 3 * 60 * 1000, GAP_MS = 20 * 60 * 1000;
@@ -120,9 +134,8 @@ function build(m){
   col.append(bubble);
 
   const time = document.createElement("time"); time.className = "time"; time.textContent = fmtTime.format(new Date(m.at));
-  col.append(time);
 
-  // reaction chips
+  // reaction chips (they hang off the bubble; the time goes under them)
   const counts = {};
   Object.entries(m.reactions || {}).forEach(([uid, e]) => { (counts[e] = counts[e] || []).push(uid); });
   const emojis = Object.keys(counts);
@@ -135,11 +148,12 @@ function build(m){
       if(counts[e].length > 1){ const n = document.createElement("b"); n.textContent = counts[e].length; c.append(n); }
       c.title = counts[e].map((u) => u === squad.uid ? "You" : nick(u)).join(", ");
       c.setAttribute("aria-label", e + " from " + c.title);
-      c.addEventListener("click", (ev) => { ev.stopPropagation(); react(m, e); });
+      c.addEventListener("click", (ev) => { ev.stopPropagation(); openReactions(m); });
       rx.append(c);
     });
     col.append(rx);
   }
+  col.append(time);
 
   // floating action bar: reactions, reply, unsend
   const bar = document.createElement("div"); bar.className = "msg-actions"; bar.hidden = true;
@@ -151,6 +165,10 @@ function build(m){
     b.addEventListener("click", (ev) => { ev.stopPropagation(); react(m, e); closeActions(); });
     emojiRow.append(b);
   });
+  const plus = document.createElement("button"); plus.type = "button"; plus.className = "more"; plus.textContent = "+";
+  plus.setAttribute("aria-label", "More reactions");
+  plus.addEventListener("click", (ev) => { ev.stopPropagation(); closeActions(); openPicker(m); });
+  emojiRow.append(plus);
   const txtRow = document.createElement("div"); txtRow.className = "act-text";
   const rb = document.createElement("button"); rb.type = "button"; rb.textContent = "↩ Reply";
   rb.addEventListener("click", (ev) => { ev.stopPropagation(); closeActions(); startReply(m); });
@@ -170,6 +188,7 @@ function build(m){
   bar.append(emojiRow, txtRow);
   col.append(bar);
   row.append(col);
+  emojify(row);
   wireGestures(row, col, bubble, m);
   return row;
 }
@@ -250,6 +269,7 @@ function separator(at){
 function render(){
   if(!loaded){ updateOnline(); return; } // wait for the first batch of messages
   const stick = nearBottom();
+  list.querySelectorAll(".seen-row").forEach((n) => n.remove());
   const names = memberIds().map((id) => nick(id)).join(",");
   const keep = {};
   const empty = $("chat-empty");
@@ -301,10 +321,116 @@ function render(){
   });
 
   empty.hidden = messages.length > 0;
+  renderSeen();
   updateOnline();
   if(firstRender || stick) toBottom(!firstRender);
   else if(addedOther) newPill.hidden = false;
+  markSeen();
   firstRender = false;
+}
+
+// bottom sheet inside the chat: emoji picker, who reacted, who has seen
+const sheet = $("chat-sheet"), sheetBody = $("sheet-body");
+function openSheet(title, fill){
+  $("sheet-title").textContent = title;
+  sheetBody.textContent = "";
+  fill(sheetBody);
+  emojify(sheetBody);
+  sheet.hidden = false;
+  requestAnimationFrame(() => sheet.classList.add("open"));
+  $("sheet-close").focus({ preventScroll:true });
+}
+function closeSheet(){
+  sheet.classList.remove("open");
+  setTimeout(() => { if(!sheet.classList.contains("open")) sheet.hidden = true; }, 220);
+}
+$("sheet-close").addEventListener("click", closeSheet);
+sheet.addEventListener("click", (e) => { if(e.target === sheet) closeSheet(); });
+function personRow(id, right){
+  const r = document.createElement("div"); r.className = "sheet-person";
+  const n = document.createElement("span"); n.className = "sheet-name";
+  n.textContent = id === squad.uid ? nick(id) + " (you)" : nameOf(id);
+  r.append(id === BOT ? botAva() : avatarEl(id, "small"), n);
+  if(right) r.append(right);
+  return r;
+}
+function openPicker(m){
+  const mine = m.reactions && m.reactions[squad.uid];
+  openSheet("React", (body) => {
+    MORE_EMOJI.forEach(([label, str]) => {
+      const h = document.createElement("p"); h.className = "sheet-label"; h.textContent = label;
+      const grid = document.createElement("div"); grid.className = "emoji-grid";
+      splitEmoji(str).forEach((e) => {
+        const b = document.createElement("button"); b.type = "button"; b.textContent = e;
+        b.setAttribute("aria-label", "React " + e);
+        if(mine === e) b.className = "on";
+        b.addEventListener("click", () => { react(m, e); closeSheet(); });
+        grid.append(b);
+      });
+      body.append(h, grid);
+    });
+  });
+}
+function openReactions(m){
+  const entries = Object.entries(m.reactions || {});
+  openSheet(entries.length === 1 ? "1 reaction" : entries.length + " reactions", (body) => {
+    entries.sort((a, b) => (a[0] === squad.uid ? -1 : b[0] === squad.uid ? 1 : 0)).forEach(([uid, e]) => {
+      const right = document.createElement("span"); right.className = "sheet-emoji"; right.textContent = e;
+      const r = personRow(uid, right);
+      if(uid === squad.uid){
+        const hint = document.createElement("small"); hint.textContent = "Tap to remove";
+        r.querySelector(".sheet-name").append(hint);
+        r.classList.add("tap");
+        r.addEventListener("click", () => { react(m, e); closeSheet(); });
+      }
+      body.append(r);
+    });
+  });
+}
+function openSeen(ids){
+  openSheet("Seen by " + ids.length, (body) => { ids.forEach((id) => body.append(personRow(id))); });
+}
+
+// seen: each person stores the time of the newest message they've seen (at most every 30 s)
+let seenMap = {}, seenWritten = 0, seenWroteAt = 0, seenTimer = null;
+function markSeen(){
+  if(!loaded || !isOpen() || document.hidden || !messages.length || !isMember()) return;
+  const latest = messages[messages.length - 1].at;
+  if(latest <= seenWritten || seenTimer) return;
+  const wait = Math.max(600, 30000 - (Date.now() - seenWroteAt));
+  seenTimer = setTimeout(() => {
+    seenTimer = null;
+    const newest = messages.length ? messages[messages.length - 1].at : latest;
+    if(!isOpen() || document.hidden || newest <= seenWritten) return;
+    seenWritten = newest; seenWroteAt = Date.now();
+    setDoc(doc(db, "seen", squad.uid), { at:newest }).catch(() => { seenWritten = 0; });
+  }, wait);
+}
+document.addEventListener("visibilitychange", () => { if(!document.hidden) markSeen(); });
+// small faces under the newest message each person has seen, like Messenger
+function renderSeen(){
+  list.querySelectorAll(".seen-row").forEach((n) => n.remove());
+  if(!messages.length) return;
+  const at = {};
+  Object.keys(seenMap).forEach((uid) => {
+    if(uid === squad.uid || !squad.members[uid]) return;
+    let idx = -1;
+    for(let i = messages.length - 1; i >= 0; i--){ if(messages[i].at <= seenMap[uid]){ idx = i; break; } }
+    if(idx < 0) return;
+    (at[idx] = at[idx] || []).push(uid);
+  });
+  Object.keys(at).forEach((i) => {
+    const m = messages[i], row = rendered[m.id];
+    if(!row) return;
+    const ids = at[i];
+    const wrap = document.createElement("button"); wrap.type = "button";
+    wrap.className = "seen-row" + (m.by === squad.uid ? " mine" : "");
+    wrap.setAttribute("aria-label", "Seen by " + ids.map((id) => nick(id)).join(", "));
+    ids.slice(0, 6).forEach((id) => wrap.append(avatarEl(id, "tiny")));
+    if(ids.length > 6){ const more = document.createElement("span"); more.className = "seen-more"; more.textContent = "+" + (ids.length - 6); wrap.append(more); }
+    wrap.addEventListener("click", () => openSeen(ids));
+    row.after(wrap);
+  });
 }
 
 // online dots and header faces, updated in place (no rebuild)
@@ -489,10 +615,11 @@ function openChat(){
   unread = 0; mentionedUnread = false; setBadge(); renderLock();
   newPill.hidden = true;
   toBottom(false);
+  markSeen();
   if(!form.hidden && matchMedia("(hover: hover)").matches) setTimeout(() => input.focus({ preventScroll:true }), 60);
 }
 function closeChat(){
-  closeActions(); closePick();
+  closeActions(); closePick(); if(!sheet.hidden) closeSheet();
   panel.classList.remove("show");
   document.documentElement.classList.remove("chat-open");
   fab.setAttribute("aria-expanded", "false"); fab.classList.remove("active");
@@ -505,6 +632,7 @@ $("chat-close").addEventListener("click", closeChat);
 document.addEventListener("keydown", (e) => {
   if(e.key !== "Escape") return;
   if(!viewer.hidden) closeViewer();
+  else if(!sheet.hidden) closeSheet();
   else if(openRow) closeActions();
   else if(replyTo) cancelReply();
   else if(isOpen()) closeChat();
@@ -703,5 +831,12 @@ if(configured){
       loaded = true;
       render();
     }, () => { lock.hidden = false; lock.textContent = "Chat lost its connection. Reload the page."; });
+    const listenSeen = () => onSnapshot(collection(db, "seen"), (snap) => {
+      const m = {};
+      snap.forEach((d) => { m[d.id] = d.data().at || 0; });
+      seenMap = m;
+      if(loaded){ const stick = nearBottom(); renderSeen(); if(stick) toBottom(false); }
+    }, () => setTimeout(listenSeen, 15000));
+    listenSeen();
   });
 }
