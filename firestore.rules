@@ -40,14 +40,22 @@ service cloud.firestore {
       allow delete: if signedIn() && resource.data.by == request.auth.uid;
     }
 
-    // squad chat; anyone signed in posts as themselves, only the sender can delete
+    // squad chat; anyone signed in posts as themselves (text and/or a photo),
+    // only the sender can unsend
     match /chat/{id} {
       allow read: if signedIn();
       allow create: if signedIn()
         && request.resource.data.by == request.auth.uid
         && request.resource.data.text is string
-        && request.resource.data.text.size() > 0
-        && request.resource.data.text.size() <= 500;
+        && request.resource.data.text.size() <= 500
+        && (request.resource.data.text.size() > 0 || ('img' in request.resource.data))
+        && (!('img' in request.resource.data)
+            || (request.resource.data.img is string && request.resource.data.img.size() < 400000))
+        && !('reactions' in request.resource.data);
+      // reactions: each person can only set or clear their own
+      allow update: if signedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions'])
+        && request.resource.data.reactions.diff(resource.data.get('reactions', {})).affectedKeys().hasOnly([request.auth.uid]);
       allow delete: if signedIn() && resource.data.by == request.auth.uid;
     }
 

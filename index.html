@@ -457,7 +457,20 @@
   </div>
   <p class="chat-lock" id="chat-lock">Add your nickname first to chat.</p>
   <div class="chat-quick" id="chat-quick" hidden></div>
+  <div class="chat-replying" id="chat-replying" hidden>
+    <div><b id="reply-who"></b><span id="reply-text"></span></div>
+    <button type="button" id="reply-cancel" aria-label="Cancel reply">×</button>
+  </div>
+  <div class="chat-attach" id="chat-attach" hidden>
+    <img id="attach-img" alt="Photo to send">
+    <button type="button" id="attach-cancel" aria-label="Remove photo">×</button>
+  </div>
   <form class="chat-form" id="chat-form" hidden>
+    <label class="chat-pic" title="Send a photo">
+      <input type="file" accept="image/*" id="chat-file" class="sr-only">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+      <span class="sr-only">Send a photo</span>
+    </label>
     <label class="sr-only" for="chat-input">Message</label>
     <input type="text" id="chat-input" maxlength="500" autocomplete="off" placeholder="Message the squad">
     <button class="btn" type="submit" id="chat-send">Send</button>
@@ -467,6 +480,13 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="main.js"></script>
 <script type="module" src="checkins.js"></script>
+<div class="overlay" id="chat-viewer" hidden>
+  <div class="chat-viewer-box">
+    <img id="chat-viewer-img" alt="">
+    <button class="btn" type="button" id="chat-viewer-close">Close</button>
+  </div>
+</div>
+<canvas class="confetti" id="confetti" aria-hidden="true" hidden></canvas>
 <script type="module" src="chat.js"></script>
 <script type="module" src="location.js"></script>
 <script type="module" src="wishes.js"></script>
