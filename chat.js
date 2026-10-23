@@ -541,10 +541,10 @@ async function askBot(question, msgId){
     });
   }catch(e){
     const code = e && e.message;
-    toast(code === "429" ? "Ela AI needs a breather. Try again in a minute."
+    toast(code === "429" ? "Ela AI is resting (free limit reached). Try again in a bit, or tomorrow."
       : code === "404" || code === "405" ? "Ela AI only works on the live site."
       : code === "401" ? "Ela AI couldn't confirm it's you. Reload the page and try again."
-      : code === "500" ? "Ela AI isn't set up yet. Add the API key in Vercel."
+      : code === "500" ? "Ela AI isn't set up yet. Add GEMINI_API_KEY in Vercel, then redeploy."
       : "Ela AI couldn't answer right now. Try again.");
   }finally{
     typing.remove();

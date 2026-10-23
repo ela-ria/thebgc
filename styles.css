@@ -747,6 +747,7 @@ label.linkbtn{position:relative}
 
 .recap-hero > *:not(.blob):not(.sp){position:relative;z-index:1}
 
+
 /* Ela AI */
 .ava.bot{background:linear-gradient(135deg,#b799ff,#e56f99);color:#fff;font-size:12px;border-color:#fff}
 .msg.bot{background:linear-gradient(135deg,#f3ecff 0%,#ffeef5 100%);box-shadow:0 0 0 1.5px rgba(155,127,209,.35),0 3px 12px -6px rgba(155,127,209,.5)}
