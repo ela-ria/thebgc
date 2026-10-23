@@ -375,7 +375,7 @@ function showTray(el, on){
 function startReply(m){
   if(!isMember()) return;
   replyTo = m;
-  $("reply-who").textContent = "Replying to " + (m.by === squad.uid ? "yourself" : nick(m.by));
+  $("reply-who").textContent = "Replying to " + (m.by === squad.uid ? "yourself" : nameOf(m.by));
   $("reply-text").textContent = snippet(m);
   showTray($("chat-replying"), true);
   input.focus({ preventScroll:true });
@@ -510,7 +510,7 @@ document.addEventListener("keydown", (e) => {
 });
 
 // ask Ela AI: show "typing" while our server function thinks, then post the answer as a reply
-async function askBot(question, msgId){
+async function askBot(question, msgId, replyingTo){
   const typing = document.createElement("div");
   typing.className = "msg-row g-first g-last typing-row";
   const col = document.createElement("div"); col.className = "msg-col";
@@ -530,7 +530,7 @@ async function askBot(question, msgId){
     const r = await fetch("api/bot", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": "Bearer " + (token || "") },
-      body: JSON.stringify({ question: question.replace(BOT_TAG_ALL, "").trim() || question, asker: nick(squad.uid), context })
+      body: JSON.stringify({ question: question.replace(BOT_TAG_ALL, "").trim() || question, asker: nick(squad.uid), context, replyingTo: replyingTo || "" })
     });
     if(!r.ok) throw new Error(String(r.status));
     const { reply } = await r.json();
@@ -560,6 +560,9 @@ async function post(text){
   const data = { by:squad.uid, text, at:Date.now() };
   if(attach) data.img = attach;
   if(replyTo){ data.replyTo = replyTo.id; data.replyBy = replyTo.by; data.replyText = snippet(replyTo); }
+  // Ela AI answers when tagged, or when someone replies to one of her messages
+  const botSaid = replyTo && replyTo.by === BOT ? (replyTo.text || "") : null;
+  const toBot = !!text && (BOT_TAG.test(text) || botSaid !== null);
   const men = findMentions(text);
   if(men.ids.length) data.mentions = men.ids.slice(0, 30);
   if(men.everyone) data.everyone = true;
@@ -570,7 +573,7 @@ async function post(text){
   try{
     const ref = await addDoc(collection(db, "chat"), data);
     toBottom(true);
-    if(BOT_TAG.test(text)) askBot(text, ref.id);
+    if(toBot) askBot(text, ref.id, botSaid);
   }catch(e){
     input.value = saved; updateSend();
     notify("Message didn't send", e && e.code === "permission-denied"

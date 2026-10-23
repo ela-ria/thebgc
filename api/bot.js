@@ -88,9 +88,12 @@ export default async function handler(req, res){
     if(!question){ res.status(400).json({ error:"empty" }); return; }
     const context = (Array.isArray(body.context) ? body.context : []).slice(-15)
       .map((m) => clip(m.who, 24) + ": " + clip(m.text, 300)).join("\n");
+    const replyingTo = clip(body.replyingTo, 400);
     const now = new Intl.DateTimeFormat("en-PH", { timeZone:"Asia/Manila", dateStyle:"full", timeStyle:"short" }).format(new Date());
     const prompt = "Current time in Manila: " + now + "\n\nRecent chat (oldest first):\n<chat>\n" + (context || "(no earlier messages)") +
-      "\n</chat>\n\n" + asker + " asked you (@ElaAI): <question>" + question + "</question>\n\nReply as Ela AI.";
+      "\n</chat>\n\n" +
+      (replyingTo ? asker + " is replying to this earlier message of yours: <your_message>" + replyingTo + "</your_message>\n" : "") +
+      asker + " said to you: <question>" + question + "</question>\n\nReply as Ela AI.";
 
     let last = 0;
     for(const model of MODELS){
