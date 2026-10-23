@@ -13,10 +13,51 @@ const BDAY = /\b(hbd|happy\s*b(irth)?day|happy\s*bday|maligayang\s*kaarawan)\b|�
 const EMOJI_ONLY = /^(?:\p{Extended_Pictographic}|\p{Emoji_Modifier}|️|‍|\s)+$/u;
 
 let messages = [], byId = {}, rendered = {}, unread = 0, started = false;
-let replyTo = null, attach = null, openRow = null;
+let replyTo = null, attach = null, openRow = null, mentionedUnread = false;
 const fmt = new Intl.DateTimeFormat("en-PH", { hour:"numeric", minute:"2-digit" });
 
-function setBadge(){ badge.textContent = unread > 9 ? "9+" : String(unread); badge.hidden = !unread; }
+function setBadge(){
+  badge.textContent = mentionedUnread ? "@" : unread > 9 ? "9+" : String(unread);
+  badge.hidden = !unread;
+}
+
+// @mentions: "@nickname" for one person, "@everyone" (or "@all") for the whole squad
+const EVERYONE = /@(everyone|all)(?![\p{L}\p{N}])/iu;
+function memberIds(){ return Object.keys(squad.members).filter((id) => squad.members[id].nickname); }
+function escapeRe(t){ return t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+function mentionRe(){
+  const names = memberIds().map((id) => nick(id)).sort((a, b) => b.length - a.length).map(escapeRe);
+  return new RegExp("@(everyone|all" + (names.length ? "|" + names.join("|") : "") + ")(?![\\p{L}\\p{N}])", "giu");
+}
+function findMentions(text){
+  const ids = new Set(), lower = text.toLowerCase();
+  memberIds().forEach((id) => {
+    const n = "@" + nick(id).toLowerCase();
+    const i = lower.indexOf(n);
+    if(i >= 0 && !/[\p{L}\p{N}]/u.test(lower.charAt(i + n.length))) ids.add(id);
+  });
+  ids.delete(squad.uid);
+  return { ids:[...ids], everyone:EVERYONE.test(text) };
+}
+function mentionsMe(m){
+  return m.by !== squad.uid && (m.everyone || (Array.isArray(m.mentions) && m.mentions.includes(squad.uid)));
+}
+// text with @mentions wrapped in highlight spans (built from text nodes, never HTML)
+function textWithMentions(text, el){
+  const re = mentionRe();
+  let last = 0, hit;
+  while((hit = re.exec(text))){
+    if(hit.index > last) el.append(text.slice(last, hit.index));
+    const span = document.createElement("span");
+    const word = hit[1].toLowerCase();
+    const isMe = word === "everyone" || word === "all" || (!!squad.uid && nick(squad.uid).toLowerCase() === word);
+    span.className = "mention" + (isMe ? " me" : "");
+    span.textContent = hit[0];
+    el.append(span);
+    last = hit.index + hit[0].length;
+  }
+  if(last < text.length) el.append(text.slice(last));
+}
 function nearBottom(){ return list.scrollHeight - list.scrollTop - list.clientHeight < 80; }
 function snippet(m){ return m.text ? m.text.slice(0, 80) : (m.img ? "📷 Photo" : ""); }
 function bigEmoji(t){ return !!t && t.length <= 12 && EMOJI_ONLY.test(t); }
@@ -54,7 +95,8 @@ function build(m){
     img.addEventListener("click", (e) => { e.stopPropagation(); openViewer(m.img, img.alt); });
     bubble.append(img);
   }
-  if(m.text){ const p = document.createElement("p"); p.className = "txt"; p.textContent = m.text; bubble.append(p); }
+  if(m.text){ const p = document.createElement("p"); p.className = "txt"; textWithMentions(m.text, p); bubble.append(p); }
+  if(mentionsMe(m)) bubble.classList.add("pinged");
   const time = document.createElement("time"); time.className = "time"; time.textContent = fmt.format(new Date(m.at));
   bubble.append(time);
   col.append(bubble);
@@ -128,7 +170,8 @@ function build(m){
 function sig(m){
   const orig = m.replyTo && byId[m.replyTo];
   return [m.text, m.img ? m.img.length : 0, JSON.stringify(m.reactions || {}), nick(m.by), (squad.members[m.by] || {}).photo ? 1 : 0,
-    m.replyTo, orig ? snippet(orig) + nick(orig.by) : "", onlineIds().includes(m.by)].join("|");
+    m.replyTo, orig ? snippet(orig) + nick(orig.by) : "", onlineIds().includes(m.by),
+    memberIds().map((id) => nick(id)).join(",")].join("|");
 }
 
 function render(){
@@ -287,7 +330,7 @@ function renderLock(){
 
 function openChat(){
   panel.hidden = false; fab.setAttribute("aria-expanded", "true");
-  unread = 0; setBadge(); renderLock();
+  unread = 0; mentionedUnread = false; setBadge(); renderLock();
   list.scrollTop = list.scrollHeight;
   if(!form.hidden) setTimeout(() => input.focus(), 30);
 }
@@ -308,6 +351,9 @@ async function post(text){
   const data = { by:squad.uid, text, at:Date.now() };
   if(attach) data.img = attach;
   if(replyTo){ data.replyTo = replyTo.id; data.replyBy = replyTo.by; data.replyText = snippet(replyTo); }
+  const men = findMentions(text);
+  if(men.ids.length) data.mentions = men.ids.slice(0, 30);
+  if(men.everyone) data.everyone = true;
   send.disabled = true;
   try{
     await addDoc(collection(db, "chat"), data);
@@ -324,7 +370,72 @@ async function post(text){
     send.disabled = false; input.focus();
   }
 }
-form.addEventListener("submit", (e) => { e.preventDefault(); post(input.value); });
+form.addEventListener("submit", (e) => {
+  e.preventDefault();
+  if(!pick.hidden && pickItems.length){ choose(pickIdx); return; }
+  post(input.value);
+});
+
+// suggestion list while typing "@"
+const pick = $("mention-list");
+let pickItems = [], pickIdx = 0, pickStart = -1;
+function closePick(){ pick.hidden = true; pickItems = []; pickStart = -1; }
+function renderPick(){
+  pick.textContent = "";
+  pickItems.forEach((it, i) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "mention-opt" + (i === pickIdx ? " on" : "");
+    b.setAttribute("role", "option"); b.setAttribute("aria-selected", i === pickIdx ? "true" : "false");
+    if(it.id) b.append(avatarEl(it.id, "small"));
+    else { const sp = document.createElement("span"); sp.className = "ava small every"; sp.textContent = "@"; b.append(sp); }
+    const n = document.createElement("span"); n.textContent = it.label; b.append(n);
+    if(!it.id){ const h = document.createElement("small"); h.textContent = "notify the whole squad"; b.append(h); }
+    b.addEventListener("mousedown", (e) => e.preventDefault());
+    b.addEventListener("click", () => choose(i));
+    pick.append(b);
+  });
+  pick.hidden = !pickItems.length;
+}
+function updatePick(){
+  const pos = input.selectionStart || 0, before = input.value.slice(0, pos);
+  const at = before.lastIndexOf("@");
+  if(at < 0 || (at > 0 && !/\s/.test(before.charAt(at - 1)))){ closePick(); return; }
+  const q = before.slice(at + 1).toLowerCase();
+  if(q.length > 24){ closePick(); return; }
+  const people = memberIds().filter((id) => id !== squad.uid && squad.members[id].going !== false)
+    .map((id) => ({ id, label:nick(id) }))
+    .filter((it) => it.label.toLowerCase().startsWith(q) || it.label.toLowerCase().includes(" " + q))
+    .sort((a, b) => a.label.localeCompare(b.label)).slice(0, 6);
+  const items = ("everyone".startsWith(q) ? [{ id:null, label:"everyone" }] : []).concat(people);
+  pickStart = at; pickItems = items; pickIdx = 0; renderPick();
+}
+function choose(i){
+  const it = pickItems[i]; if(!it) return;
+  const pos = input.selectionStart || 0;
+  const insert = "@" + it.label + " ";
+  input.value = input.value.slice(0, pickStart) + insert + input.value.slice(pos);
+  const caret = pickStart + insert.length;
+  input.setSelectionRange(caret, caret);
+  closePick(); input.focus();
+}
+input.addEventListener("input", updatePick);
+input.addEventListener("click", updatePick);
+input.addEventListener("blur", () => setTimeout(closePick, 150));
+input.addEventListener("keydown", (e) => {
+  if(pick.hidden || !pickItems.length) return;
+  if(e.key === "ArrowDown"){ e.preventDefault(); pickIdx = (pickIdx + 1) % pickItems.length; renderPick(); }
+  else if(e.key === "ArrowUp"){ e.preventDefault(); pickIdx = (pickIdx - 1 + pickItems.length) % pickItems.length; renderPick(); }
+  else if(e.key === "Tab"){ e.preventDefault(); choose(pickIdx); }
+  else if(e.key === "Escape"){ e.preventDefault(); e.stopPropagation(); closePick(); }
+});
+// "@" button for phones, where the @ key is buried
+$("chat-mention-btn").addEventListener("click", () => {
+  const pos = input.selectionStart ?? input.value.length;
+  const pre = input.value.slice(0, pos), needSpace = pre && !/\s$/.test(pre);
+  input.value = pre + (needSpace ? " @" : "@") + input.value.slice(pos);
+  const caret = pos + (needSpace ? 2 : 1);
+  input.focus(); input.setSelectionRange(caret, caret); updatePick();
+});
 QUICK.forEach((q) => {
   const b = document.createElement("button");
   b.type = "button"; b.className = "quick"; b.textContent = q;
@@ -352,9 +463,14 @@ if(configured){
           if(ch.type !== "added") return;
           if(m.text && BDAY.test(m.text)) confetti();
           if(m.by === squad.uid) return;
-          if(panel.hidden || document.hidden){
+          const body = m.text || "📷 Sent a photo";
+          if(mentionsMe(m)){
+            // mentions always ping, even with the chat open
+            if(panel.hidden){ unread++; mentionedUnread = true; setBadge(); }
+            notify(nick(m.by) + (m.everyone ? " → @everyone" : " mentioned you"), body, "mention-" + ch.doc.id);
+          } else if(panel.hidden || document.hidden){
             if(panel.hidden){ unread++; setBadge(); }
-            notify(nick(m.by), m.text || "📷 Sent a photo", "chat");
+            notify(nick(m.by), body, "chat");
           }
         });
       }
