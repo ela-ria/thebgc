@@ -1,33 +1,47 @@
-// squad chat: nicknames, replies, reactions, photos, and birthday confetti
+// squad chat: nicknames, replies, reactions, photos, @mentions, and birthday confetti
 import { configured, db } from "./firebase.js";
-import { squad, onSquad, nick, isMember, notify, notifState, enableNotifs, avatarEl, onlineIds, toast } from "./squad.js";
+import { squad, onSquad, nick, isMember, notify, notifState, enableNotifs, avatarEl, onlineIds, isOnline, toast } from "./squad.js";
 import { collection, addDoc, doc, updateDoc, deleteDoc, deleteField, onSnapshot, query, orderBy, limitToLast } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const $ = (id) => document.getElementById(id);
 const fab = $("chat-fab"), badge = $("chat-badge"), panel = $("chat-panel"), list = $("chat-list");
 const form = $("chat-form"), input = $("chat-input"), send = $("chat-send"), lock = $("chat-lock");
-const notifBtn = $("chat-notif"), notifNote = $("chat-notif-note");
+const notifBtn = $("chat-notif"), notifNote = $("chat-notif-note"), newPill = $("chat-newpill");
 const QUICK = ["Happy birthday, Jaspher! 🎂", "Nasaan na kayo?", "Nandito na ako!", "Wait lang, papunta na!", "CR lang saglit", "Kain na tayo!"];
 const REACTS = ["😂", "❤️", "😮", "😢", "👍", "🎂"];
 const BDAY = /\b(hbd|happy\s*b(irth)?day|happy\s*bday|maligayang\s*kaarawan)\b|🎂|🥳/i;
 const EMOJI_ONLY = /^(?:\p{Extended_Pictographic}|\p{Emoji_Modifier}|️|‍|\s)+$/u;
+const GROUP_MS = 3 * 60 * 1000, GAP_MS = 20 * 60 * 1000;
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-let messages = [], byId = {}, rendered = {}, unread = 0, started = false;
+let messages = [], byId = {}, rendered = {}, unread = 0, started = false, firstRender = true, loaded = false;
 let replyTo = null, attach = null, openRow = null, mentionedUnread = false;
-const fmt = new Intl.DateTimeFormat("en-PH", { hour:"numeric", minute:"2-digit" });
+const fmtTime = new Intl.DateTimeFormat("en-PH", { hour:"numeric", minute:"2-digit" });
+const fmtDay = new Intl.DateTimeFormat("en-PH", { weekday:"short", hour:"numeric", minute:"2-digit" });
 
 function setBadge(){
   badge.textContent = mentionedUnread ? "@" : unread > 9 ? "9+" : String(unread);
   badge.hidden = !unread;
+  if(unread){ badge.classList.remove("bump"); void badge.offsetWidth; badge.classList.add("bump"); }
 }
+function nearBottom(){ return list.scrollHeight - list.scrollTop - list.clientHeight < 90; }
+function toBottom(smooth){ list.scrollTo({ top:list.scrollHeight, behavior: smooth && !reduceMotion ? "smooth" : "auto" }); }
+function snippet(m){ return m.text ? m.text.slice(0, 80) : (m.img ? "📷 Photo" : ""); }
+function bigEmoji(t){ return !!t && t.length <= 12 && EMOJI_ONLY.test(t); }
 
 // @mentions: "@nickname" for one person, "@everyone" (or "@all") for the whole squad
 const EVERYONE = /@(everyone|all)(?![\p{L}\p{N}])/iu;
 function memberIds(){ return Object.keys(squad.members).filter((id) => squad.members[id].nickname); }
 function escapeRe(t){ return t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+let reCache = { key:null, re:null };
 function mentionRe(){
-  const names = memberIds().map((id) => nick(id)).sort((a, b) => b.length - a.length).map(escapeRe);
-  return new RegExp("@(everyone|all" + (names.length ? "|" + names.join("|") : "") + ")(?![\\p{L}\\p{N}])", "giu");
+  const names = memberIds().map((id) => nick(id)).sort((a, b) => b.length - a.length);
+  const key = names.join("\u0000");
+  if(reCache.key !== key){
+    reCache = { key, re:new RegExp("@(everyone|all" + (names.length ? "|" + names.map(escapeRe).join("|") : "") + ")(?![\\p{L}\\p{N}])", "giu") };
+  }
+  reCache.re.lastIndex = 0;
+  return reCache.re;
 }
 function findMentions(text){
   const ids = new Set(), lower = text.toLowerCase();
@@ -58,11 +72,8 @@ function textWithMentions(text, el){
   }
   if(last < text.length) el.append(text.slice(last));
 }
-function nearBottom(){ return list.scrollHeight - list.scrollTop - list.clientHeight < 80; }
-function snippet(m){ return m.text ? m.text.slice(0, 80) : (m.img ? "📷 Photo" : ""); }
-function bigEmoji(t){ return !!t && t.length <= 12 && EMOJI_ONLY.test(t); }
 
-// one message row: avatar, bubble (name, quote, photo, text, time), reactions, and a hidden action bar
+// one message row: avatar, then a column with name, bubble, time, reactions, and a floating action bar
 function build(m){
   const mine = m.by === squad.uid;
   const row = document.createElement("div");
@@ -71,20 +82,21 @@ function build(m){
   row.append(mine ? document.createElement("span") : avatarEl(m.by, "small"));
 
   const col = document.createElement("div"); col.className = "msg-col";
-  const bubble = document.createElement("div");
-  bubble.className = "msg" + (mine ? " mine" : "") + (bigEmoji(m.text) && !m.img && !m.replyTo ? " big" : "");
-  bubble.tabIndex = 0;
-  bubble.setAttribute("aria-label", (mine ? "You" : nick(m.by)) + ": " + (m.text || "photo") + ". Press Enter for reactions and reply.");
-
   const who = document.createElement("span"); who.className = "who"; who.textContent = mine ? "You" : nick(m.by);
-  bubble.append(who);
+  col.append(who);
+
+  const bubble = document.createElement("div");
+  const big = bigEmoji(m.text) && !m.img && !m.replyTo;
+  bubble.className = "msg" + (mine ? " mine" : "") + (big ? " big" : "") + (m.img && !m.text && !m.replyTo ? " photo-only" : "");
+  bubble.tabIndex = 0;
+  bubble.setAttribute("aria-label", who.textContent + ": " + (m.text || "photo") + ". Press Enter for reactions and reply.");
 
   if(m.replyTo){
     const orig = byId[m.replyTo];
     const q = document.createElement("button"); q.type = "button"; q.className = "quote";
     const qn = document.createElement("b"), qt = document.createElement("span");
     const qBy = orig ? orig.by : m.replyBy;
-    qn.textContent = qBy === squad.uid ? "You" : nick(qBy);
+    qn.textContent = "↩ " + (qBy === squad.uid ? "You" : nick(qBy));
     qt.textContent = orig ? snippet(orig) : (m.replyText || "Original message");
     q.append(qn, qt);
     q.addEventListener("click", (e) => { e.stopPropagation(); jumpTo(m.replyTo); });
@@ -92,14 +104,17 @@ function build(m){
   }
   if(m.img){
     const img = document.createElement("img"); img.className = "chat-img"; img.src = m.img; img.alt = "Photo from " + who.textContent;
-    img.addEventListener("click", (e) => { e.stopPropagation(); openViewer(m.img, img.alt); });
+    img.decoding = "async";
+    img.addEventListener("load", () => { if(nearBottom() || row._fresh) toBottom(false); }, { once:true });
+    img.addEventListener("click", (e) => { e.stopPropagation(); if(!row._longPressed) openViewer(m.img, img.alt); });
     bubble.append(img);
   }
   if(m.text){ const p = document.createElement("p"); p.className = "txt"; textWithMentions(m.text, p); bubble.append(p); }
   if(mentionsMe(m)) bubble.classList.add("pinged");
-  const time = document.createElement("time"); time.className = "time"; time.textContent = fmt.format(new Date(m.at));
-  bubble.append(time);
   col.append(bubble);
+
+  const time = document.createElement("time"); time.className = "time"; time.textContent = fmtTime.format(new Date(m.at));
+  col.append(time);
 
   // reaction chips
   const counts = {};
@@ -109,9 +124,9 @@ function build(m){
     const rx = document.createElement("div"); rx.className = "reacts";
     emojis.forEach((e) => {
       const c = document.createElement("button"); c.type = "button";
-      const mineR = counts[e].includes(squad.uid);
-      c.className = "react-chip" + (mineR ? " on" : "");
-      c.textContent = e + (counts[e].length > 1 ? " " + counts[e].length : "");
+      c.className = "react-chip" + (counts[e].includes(squad.uid) ? " on" : "");
+      const em = document.createElement("span"); em.textContent = e; c.append(em);
+      if(counts[e].length > 1){ const n = document.createElement("b"); n.textContent = counts[e].length; c.append(n); }
       c.title = counts[e].map((u) => u === squad.uid ? "You" : nick(u)).join(", ");
       c.setAttribute("aria-label", e + " from " + c.title);
       c.addEventListener("click", (ev) => { ev.stopPropagation(); react(m, e); });
@@ -120,110 +135,221 @@ function build(m){
     col.append(rx);
   }
 
-  // action bar: reactions, reply, unsend
+  // floating action bar: reactions, reply, unsend
   const bar = document.createElement("div"); bar.className = "msg-actions"; bar.hidden = true;
+  const emojiRow = document.createElement("div"); emojiRow.className = "act-emoji";
   REACTS.forEach((e) => {
     const b = document.createElement("button"); b.type = "button"; b.textContent = e;
     b.setAttribute("aria-label", "React " + e);
     if(m.reactions && m.reactions[squad.uid] === e) b.className = "on";
     b.addEventListener("click", (ev) => { ev.stopPropagation(); react(m, e); closeActions(); });
-    bar.append(b);
+    emojiRow.append(b);
   });
-  const rb = document.createElement("button"); rb.type = "button"; rb.className = "txtbtn"; rb.textContent = "Reply";
-  rb.addEventListener("click", (ev) => { ev.stopPropagation(); startReply(m); closeActions(); });
-  bar.append(rb);
+  const txtRow = document.createElement("div"); txtRow.className = "act-text";
+  const rb = document.createElement("button"); rb.type = "button"; rb.textContent = "↩ Reply";
+  rb.addEventListener("click", (ev) => { ev.stopPropagation(); closeActions(); startReply(m); });
+  txtRow.append(rb);
   if(mine){
-    const ub = document.createElement("button"); ub.type = "button"; ub.className = "txtbtn"; ub.textContent = "Unsend";
+    const ub = document.createElement("button"); ub.type = "button"; ub.className = "danger"; ub.textContent = "Unsend";
     ub.addEventListener("click", (ev) => {
       ev.stopPropagation();
-      if(ub.dataset.armed){ closeActions(); deleteDoc(doc(db, "chat", m.id)).catch(() => toast("Couldn't unsend. Try again.")); }
-      else { ub.dataset.armed = "1"; ub.textContent = "Tap again"; }
+      if(ub.dataset.armed){
+        closeActions();
+        row.classList.add("leaving");
+        deleteDoc(doc(db, "chat", m.id)).catch(() => { row.classList.remove("leaving"); toast("Couldn't unsend. Try again."); });
+      } else { ub.dataset.armed = "1"; ub.textContent = "Tap again to unsend"; }
     });
-    bar.append(ub);
+    txtRow.append(ub);
   }
+  bar.append(emojiRow, txtRow);
   col.append(bar);
   row.append(col);
-
-  // tap = actions, double-tap = ❤️, swipe right = reply
-  let tapTimer = null;
-  bubble.addEventListener("click", () => {
-    if(tapTimer){ clearTimeout(tapTimer); tapTimer = null; react(m, "❤️", true); return; }
-    tapTimer = setTimeout(() => { tapTimer = null; toggleActions(row); }, 240);
-  });
-  bubble.addEventListener("keydown", (e) => { if(e.key === "Enter" || e.key === " "){ e.preventDefault(); toggleActions(row); } });
-  let sx = 0, sy = 0, dx = 0, swiping = false;
-  row.addEventListener("touchstart", (e) => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; dx = 0; swiping = true; }, { passive:true });
-  row.addEventListener("touchmove", (e) => {
-    if(!swiping) return;
-    dx = e.touches[0].clientX - sx;
-    if(Math.abs(e.touches[0].clientY - sy) > 30){ swiping = false; col.style.transform = ""; return; }
-    if(dx > 0) col.style.transform = "translateX(" + Math.min(dx, 70) + "px)";
-  }, { passive:true });
-  row.addEventListener("touchend", () => {
-    col.style.transform = "";
-    if(swiping && dx > 60) startReply(m);
-    swiping = false;
-  });
+  wireGestures(row, col, bubble, m);
   return row;
 }
 
-function sig(m){
+// gestures: click/Enter or long-press = actions, double-tap = ❤️, swipe right = reply
+function wireGestures(row, col, bubble, m){
+  let lastTap = 0, pressTimer = null, sx = 0, sy = 0, dx = 0, mode = null;
+  bubble.addEventListener("keydown", (e) => { if(e.key === "Enter" || e.key === " "){ e.preventDefault(); toggleActions(row); } });
+
+  bubble.addEventListener("pointerdown", (e) => {
+    row._longPressed = false;
+    if(e.pointerType === "mouse") return;
+    pressTimer = setTimeout(() => {
+      row._longPressed = true;
+      if(navigator.vibrate) navigator.vibrate(12);
+      toggleActions(row, true);
+    }, 420);
+  });
+  const cancelPress = () => { clearTimeout(pressTimer); pressTimer = null; };
+  bubble.addEventListener("pointerup", cancelPress);
+  bubble.addEventListener("pointercancel", cancelPress);
+  bubble.addEventListener("pointerleave", cancelPress);
+  bubble.addEventListener("contextmenu", (e) => { if(row._longPressed) e.preventDefault(); });
+
+  bubble.addEventListener("click", () => {
+    if(row._longPressed){ row._longPressed = false; return; }
+    const now = Date.now();
+    if(now - lastTap < 300){ lastTap = 0; heart(bubble); react(m, "❤️", true); closeActions(); return; }
+    lastTap = now;
+    // with a mouse, a click opens the menu right away; on touch, long-press does
+    if(matchMedia("(hover: hover)").matches) toggleActions(row);
+  });
+
+  row.addEventListener("touchstart", (e) => {
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY; dx = 0; mode = null;
+    col.style.transition = "none";
+  }, { passive:true });
+  row.addEventListener("touchmove", (e) => {
+    const x = e.touches[0].clientX - sx, y = e.touches[0].clientY - sy;
+    if(!mode) mode = Math.abs(x) > 8 && Math.abs(x) > Math.abs(y) ? "swipe" : (Math.abs(y) > 8 ? "scroll" : null);
+    if(mode !== "swipe") return;
+    cancelPress();
+    dx = Math.max(0, Math.min(x, 90));
+    col.style.transform = "translateX(" + (dx < 60 ? dx : 60 + (dx - 60) * .35) + "px)";
+    row.classList.toggle("swipe-ready", dx > 60);
+    if(dx > 60 && !row._buzzed){ row._buzzed = true; if(navigator.vibrate) navigator.vibrate(8); }
+    if(dx <= 60) row._buzzed = false;
+  }, { passive:true });
+  row.addEventListener("touchend", () => {
+    col.style.transition = ""; col.style.transform = "";
+    if(mode === "swipe" && dx > 60) startReply(m);
+    row.classList.remove("swipe-ready"); row._buzzed = false; mode = null;
+  });
+}
+
+function heart(bubble){
+  if(reduceMotion) return;
+  const h = document.createElement("span"); h.className = "heart-burst"; h.textContent = "❤️";
+  bubble.append(h);
+  setTimeout(() => h.remove(), 750);
+}
+
+function sig(m, names){
   const orig = m.replyTo && byId[m.replyTo];
-  return [m.text, m.img ? m.img.length : 0, JSON.stringify(m.reactions || {}), nick(m.by), (squad.members[m.by] || {}).photo ? 1 : 0,
-    m.replyTo, orig ? snippet(orig) + nick(orig.by) : "", onlineIds().includes(m.by),
-    memberIds().map((id) => nick(id)).join(",")].join("|");
+  return [m.text, m.img ? m.img.length : 0, JSON.stringify(m.reactions || {}), (squad.members[m.by] || {}).photo ? 1 : 0,
+    m.replyTo, orig ? snippet(orig) + orig.by : "", names].join("|");
+}
+
+function separator(at){
+  const el = document.createElement("div"); el.className = "chat-sep";
+  const span = document.createElement("span");
+  const d = new Date(at), today = new Date();
+  span.textContent = d.toDateString() === today.toDateString() ? fmtTime.format(d) : fmtDay.format(d);
+  el.append(span);
+  return el;
 }
 
 function render(){
+  if(!loaded){ updateOnline(); return; } // wait for the first batch of messages
   const stick = nearBottom();
-  const seen = {};
-  let prev = null;
-  messages.forEach((m) => {
-    seen[m.id] = true;
-    const s = sig(m);
+  const names = memberIds().map((id) => nick(id)).join(",");
+  const keep = {};
+  const empty = $("chat-empty");
+  let cursor = empty;
+  const place = (el) => {
+    const want = cursor.nextSibling;
+    if(want !== el) list.insertBefore(el, want);
+    cursor = el;
+  };
+  let addedOther = false;
+
+  messages.forEach((m, i) => {
+    const prev = messages[i - 1], next = messages[i + 1];
+    // time separator after a long gap
+    if(!prev || m.at - prev.at > GAP_MS){
+      const key = "sep:" + m.id;
+      keep[key] = true;
+      if(!rendered[key]) rendered[key] = separator(m.at);
+      place(rendered[key]);
+    }
+    keep[m.id] = true;
+    const s = sig(m, names);
     let row = rendered[m.id];
     if(!row || row._sig !== s){
       const fresh = build(m); fresh._sig = s;
       if(row){ if(openRow === row) openRow = null; row.replaceWith(fresh); }
+      else if(!firstRender){
+        fresh._fresh = true;
+        if(!reduceMotion) fresh.classList.add("pop");
+        if(m.by !== squad.uid) addedOther = true;
+      }
       row = fresh; rendered[m.id] = row;
     }
-    // keep order
-    const want = prev ? prev.nextSibling : list.firstChild;
-    if(want !== row) list.insertBefore(row, want);
-    prev = row;
+    // Messenger-style grouping: same person within a few minutes
+    const joinPrev = !!prev && prev.by === m.by && m.at - prev.at < GROUP_MS;
+    const joinNext = !!next && next.by === m.by && next.at - m.at < GROUP_MS;
+    row.classList.toggle("g-first", !joinPrev);
+    row.classList.toggle("g-last", !joinNext);
+    place(row);
   });
-  Object.keys(rendered).forEach((id) => { if(!seen[id]){ if(openRow === rendered[id]) openRow = null; rendered[id].remove(); delete rendered[id]; } });
-  const on = onlineIds().length;
-  $("chat-online").textContent = on ? on + " online now" : "";
-  $("chat-empty").hidden = messages.length > 0;
-  if(stick) list.scrollTop = list.scrollHeight;
+  Object.keys(rendered).forEach((k) => {
+    if(keep[k]) return;
+    const el = rendered[k];
+    if(openRow === el) openRow = null;
+    delete rendered[k];
+    if(!reduceMotion && el.classList.contains("msg-row")){
+      el.classList.add("leaving"); setTimeout(() => el.remove(), 220);
+    } else el.remove();
+  });
+
+  empty.hidden = messages.length > 0;
+  updateOnline();
+  if(firstRender || stick) toBottom(!firstRender);
+  else if(addedOther) newPill.hidden = false;
+  firstRender = false;
 }
 
-function toggleActions(row){
+// online dots and header faces, updated in place (no rebuild)
+function updateOnline(){
+  panel.querySelectorAll(".msg-row .ava[data-uid]").forEach((a) => a.classList.toggle("online", isOnline(a.dataset.uid)));
+  const on = onlineIds();
+  $("chat-online").textContent = on.length ? on.length + " online now" : "";
+  const stack = $("chat-faces");
+  stack.textContent = "";
+  on.slice(0, 4).forEach((id) => stack.append(avatarEl(id, "small")));
+}
+
+function toggleActions(row, force){
   if(openRow && openRow !== row) closeActions();
   const bar = row.querySelector(".msg-actions");
-  bar.hidden = !bar.hidden;
-  openRow = bar.hidden ? null : row;
-  if(!bar.hidden){ const b = bar.querySelector("button"); if(b) b.focus({ preventScroll:true }); }
+  const show = force === true ? true : bar.hidden;
+  if(!show){ closeActions(); return; }
+  // open below the bubble when there's no room above
+  const top = row.getBoundingClientRect().top - list.getBoundingClientRect().top;
+  bar.classList.toggle("below", top < 70);
+  bar.hidden = false;
+  row.classList.add("active");
+  openRow = row;
+  requestAnimationFrame(() => bar.classList.add("show"));
 }
 function closeActions(){
   if(!openRow) return;
-  const bar = openRow.querySelector(".msg-actions");
-  if(bar) bar.hidden = true;
+  const row = openRow, bar = row.querySelector(".msg-actions");
   openRow = null;
+  row.classList.remove("active");
+  if(!bar) return;
+  bar.classList.remove("show");
+  setTimeout(() => { if(openRow !== row) bar.hidden = true; }, 160);
 }
-list.addEventListener("click", (e) => { if(e.target === list) closeActions(); });
+list.addEventListener("click", (e) => { if(!e.target.closest(".msg-col")) closeActions(); });
+list.addEventListener("scroll", () => {
+  if(openRow) closeActions();
+  if(nearBottom()) newPill.hidden = true;
+}, { passive:true });
+newPill.addEventListener("click", () => { newPill.hidden = true; toBottom(true); });
 
 function jumpTo(id){
   const row = rendered[id];
   if(!row){ toast("That message is too old to show here."); return; }
-  row.scrollIntoView({ block:"center", behavior:"smooth" });
+  row.scrollIntoView({ block:"center", behavior: reduceMotion ? "auto" : "smooth" });
   row.classList.remove("flash"); void row.offsetWidth; row.classList.add("flash");
 }
 
 // reactions: one per person per message; tapping your own again removes it
 function react(m, emoji, onlyAdd){
-  if(!isMember()) { toast("Add your nickname first."); return; }
+  if(!isMember()){ toast("Add your nickname first."); return; }
   const cur = m.reactions && m.reactions[squad.uid];
   if(onlyAdd && cur === emoji) return;
   const next = cur === emoji ? deleteField() : emoji;
@@ -233,16 +359,22 @@ function react(m, emoji, onlyAdd){
       : "Couldn't react. Check your connection."));
 }
 
+// trays above the input (reply, photo) slide instead of popping
+function showTray(el, on){
+  if(on){ el.hidden = false; requestAnimationFrame(() => el.classList.add("show")); }
+  else { el.classList.remove("show"); setTimeout(() => { if(!el.classList.contains("show")) el.hidden = true; }, 180); }
+}
+
 // replying
 function startReply(m){
   if(!isMember()) return;
   replyTo = m;
   $("reply-who").textContent = "Replying to " + (m.by === squad.uid ? "yourself" : nick(m.by));
   $("reply-text").textContent = snippet(m);
-  $("chat-replying").hidden = false;
-  input.focus();
+  showTray($("chat-replying"), true);
+  input.focus({ preventScroll:true });
 }
-function cancelReply(){ replyTo = null; $("chat-replying").hidden = true; }
+function cancelReply(){ replyTo = null; showTray($("chat-replying"), false); }
 $("reply-cancel").addEventListener("click", cancelReply);
 
 // photos
@@ -266,6 +398,11 @@ function shrink(file){
     img.src = url;
   });
 }
+function clearAttach(){
+  attach = null; showTray($("chat-attach"), false);
+  setTimeout(() => { if(!attach) $("attach-img").removeAttribute("src"); }, 200);
+  updateSend();
+}
 $("chat-file").addEventListener("change", async (e) => {
   const f = e.target.files && e.target.files[0];
   e.target.value = "";
@@ -273,16 +410,24 @@ $("chat-file").addEventListener("change", async (e) => {
   try{
     attach = await shrink(f);
     $("attach-img").src = attach;
-    $("chat-attach").hidden = false;
-    input.focus();
+    showTray($("chat-attach"), true);
+    updateSend();
+    input.focus({ preventScroll:true });
   }catch(err){ toast("Couldn't use that photo. Try a JPG or PNG."); }
 });
-$("attach-cancel").addEventListener("click", () => { attach = null; $("chat-attach").hidden = true; $("attach-img").removeAttribute("src"); });
+$("attach-cancel").addEventListener("click", clearAttach);
 
 // photo viewer
 const viewer = $("chat-viewer");
-function openViewer(src, alt){ $("chat-viewer-img").src = src; $("chat-viewer-img").alt = alt; viewer.hidden = false; $("chat-viewer-close").focus(); }
-function closeViewer(){ viewer.hidden = true; $("chat-viewer-img").removeAttribute("src"); }
+function openViewer(src, alt){
+  $("chat-viewer-img").src = src; $("chat-viewer-img").alt = alt;
+  viewer.hidden = false; requestAnimationFrame(() => viewer.classList.add("show"));
+  $("chat-viewer-close").focus();
+}
+function closeViewer(){
+  viewer.classList.remove("show");
+  setTimeout(() => { viewer.hidden = true; $("chat-viewer-img").removeAttribute("src"); }, 180);
+}
 $("chat-viewer-close").addEventListener("click", closeViewer);
 viewer.addEventListener("click", (e) => { if(e.target === viewer) closeViewer(); });
 
@@ -290,7 +435,7 @@ viewer.addEventListener("click", (e) => { if(e.target === viewer) closeViewer();
 const canvas = $("confetti");
 let confettiOn = false;
 function confetti(){
-  if(confettiOn || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  if(confettiOn || reduceMotion) return;
   confettiOn = true;
   const g = canvas.getContext("2d"), dpr = window.devicePixelRatio || 1;
   const W = innerWidth, H = innerHeight;
@@ -328,22 +473,38 @@ function renderLock(){
   notifNote.hidden = st !== "denied";
 }
 
+// open/close with a soft scale-and-fade from the Chat button
+function isOpen(){ return panel.classList.contains("show"); }
 function openChat(){
-  panel.hidden = false; fab.setAttribute("aria-expanded", "true");
+  panel.hidden = false;
+  document.documentElement.classList.add("chat-open");
+  requestAnimationFrame(() => panel.classList.add("show"));
+  fab.setAttribute("aria-expanded", "true"); fab.classList.add("active");
   unread = 0; mentionedUnread = false; setBadge(); renderLock();
-  list.scrollTop = list.scrollHeight;
-  if(!form.hidden) setTimeout(() => input.focus(), 30);
+  newPill.hidden = true;
+  toBottom(false);
+  if(!form.hidden && matchMedia("(hover: hover)").matches) setTimeout(() => input.focus({ preventScroll:true }), 60);
 }
-function closeChat(){ closeActions(); panel.hidden = true; fab.setAttribute("aria-expanded", "false"); fab.focus(); }
-fab.addEventListener("click", () => panel.hidden ? openChat() : closeChat());
+function closeChat(){
+  closeActions(); closePick();
+  panel.classList.remove("show");
+  document.documentElement.classList.remove("chat-open");
+  fab.setAttribute("aria-expanded", "false"); fab.classList.remove("active");
+  setTimeout(() => { if(!isOpen()) panel.hidden = true; }, reduceMotion ? 0 : 220);
+  fab.focus({ preventScroll:true });
+}
+fab.addEventListener("click", () => isOpen() ? closeChat() : openChat());
 $("chat-close").addEventListener("click", closeChat);
 document.addEventListener("keydown", (e) => {
   if(e.key !== "Escape") return;
   if(!viewer.hidden) closeViewer();
   else if(openRow) closeActions();
   else if(replyTo) cancelReply();
-  else if(!panel.hidden) closeChat();
+  else if(isOpen()) closeChat();
 });
+
+function updateSend(){ send.disabled = !input.value.trim() && !attach; }
+input.addEventListener("input", updateSend);
 
 async function post(text){
   text = text.replace(/\s+/g, " ").trim().slice(0, 500);
@@ -354,26 +515,40 @@ async function post(text){
   const men = findMentions(text);
   if(men.ids.length) data.mentions = men.ids.slice(0, 30);
   if(men.everyone) data.everyone = true;
-  send.disabled = true;
+  // clear the composer right away so sending feels instant
+  const saved = input.value;
+  input.value = ""; cancelReply(); clearAttach(); updateSend();
+  send.classList.add("sending");
   try{
     await addDoc(collection(db, "chat"), data);
-    input.value = ""; cancelReply();
-    attach = null; $("chat-attach").hidden = true; $("attach-img").removeAttribute("src");
-    list.scrollTop = list.scrollHeight;
+    toBottom(true);
   }catch(e){
+    input.value = saved; updateSend();
     notify("Message didn't send", e && e.code === "permission-denied"
       ? "Chat isn't allowed yet. Publish the updated Firestore rules in the Firebase console."
       : e && e.code === "resource-exhausted"
       ? "The site hit today's free limit. It resets at 3 PM Philippine time."
       : "Check your connection and try again.");
   }finally{
-    send.disabled = false; input.focus();
+    send.classList.remove("sending");
   }
 }
 form.addEventListener("submit", (e) => {
   e.preventDefault();
   if(!pick.hidden && pickItems.length){ choose(pickIdx); return; }
   post(input.value);
+  input.focus({ preventScroll:true });
+});
+QUICK.forEach((q) => {
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "quick"; b.textContent = q;
+  b.addEventListener("click", () => post(q));
+  $("chat-quick").append(b);
+});
+notifBtn.addEventListener("click", async () => {
+  const st = await enableNotifs();
+  renderLock();
+  if(st === "granted") notify("Notifications are on", "We'll ping you when the squad posts.");
 });
 
 // suggestion list while typing "@"
@@ -416,7 +591,7 @@ function choose(i){
   input.value = input.value.slice(0, pickStart) + insert + input.value.slice(pos);
   const caret = pickStart + insert.length;
   input.setSelectionRange(caret, caret);
-  closePick(); input.focus();
+  closePick(); updateSend(); input.focus();
 }
 input.addEventListener("input", updatePick);
 input.addEventListener("click", updatePick);
@@ -434,26 +609,17 @@ $("chat-mention-btn").addEventListener("click", () => {
   const pre = input.value.slice(0, pos), needSpace = pre && !/\s$/.test(pre);
   input.value = pre + (needSpace ? " @" : "@") + input.value.slice(pos);
   const caret = pos + (needSpace ? 2 : 1);
-  input.focus(); input.setSelectionRange(caret, caret); updatePick();
-});
-QUICK.forEach((q) => {
-  const b = document.createElement("button");
-  b.type = "button"; b.className = "quick"; b.textContent = q;
-  b.addEventListener("click", () => post(q));
-  $("chat-quick").append(b);
-});
-notifBtn.addEventListener("click", async () => {
-  const st = await enableNotifs();
-  renderLock();
-  if(st === "granted") notify("Notifications are on", "We'll ping you when the squad posts.");
+  input.focus(); input.setSelectionRange(caret, caret); updatePick(); updateSend();
 });
 
+updateSend();
 if(configured){
   onSquad((sq) => {
     if(!sq.uid) return;
     fab.hidden = false;
-    renderLock(); render();
-    if(started) return;
+    renderLock();
+    // later squad updates (presence ticks) only rebuild rows whose names or photos changed
+    if(started){ render(); return; }
     started = true;
     let first = true;
     onSnapshot(query(collection(db, "chat"), orderBy("at"), limitToLast(80)), (snap) => {
@@ -466,10 +632,10 @@ if(configured){
           const body = m.text || "📷 Sent a photo";
           if(mentionsMe(m)){
             // mentions always ping, even with the chat open
-            if(panel.hidden){ unread++; mentionedUnread = true; setBadge(); }
+            if(!isOpen()){ unread++; mentionedUnread = true; setBadge(); }
             notify(nick(m.by) + (m.everyone ? " → @everyone" : " mentioned you"), body, "mention-" + ch.doc.id);
-          } else if(panel.hidden || document.hidden){
-            if(panel.hidden){ unread++; setBadge(); }
+          } else if(!isOpen() || document.hidden){
+            if(!isOpen()){ unread++; setBadge(); }
             notify(nick(m.by), body, "chat");
           }
         });
@@ -477,6 +643,7 @@ if(configured){
       first = false;
       messages = snap.docs.map((d) => ({ id:d.id, ...d.data() }));
       byId = {}; messages.forEach((m) => { byId[m.id] = m; });
+      loaded = true;
       render();
     }, () => { lock.hidden = false; lock.textContent = "Chat lost its connection. Reload the page."; });
   });

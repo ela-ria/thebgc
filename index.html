@@ -440,43 +440,54 @@
 
 <!-- SQUAD CHAT -->
 <button class="chat-fab" type="button" id="chat-fab" aria-controls="chat-panel" aria-expanded="false" hidden>
-  Chat<span class="chat-badge" id="chat-badge" hidden>0</span>
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3C6.5 3 2 6.9 2 11.7c0 2.6 1.3 4.9 3.4 6.5L5 21.5l3.6-1.9c1.1.3 2.2.5 3.4.5 5.5 0 10-3.9 10-8.7S17.5 3 12 3z"/></svg>
+  <span>Chat</span><span class="chat-badge" id="chat-badge" hidden>0</span>
 </button>
 <section class="chat-panel" id="chat-panel" aria-label="Squad chat" hidden>
   <header class="chat-head">
-    <div>
+    <div class="chat-faces" id="chat-faces" aria-hidden="true"></div>
+    <div class="chat-title">
       <h2>Squad <span class="serif">chat</span></h2>
       <p class="chat-online" id="chat-online"></p>
     </div>
-    <button class="chat-x" type="button" id="chat-close" aria-label="Close chat">×</button>
+    <button class="chat-x" type="button" id="chat-close" aria-label="Close chat">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
   </header>
-  <button class="chat-notif" type="button" id="chat-notif" hidden>Turn on notifications</button>
+  <button class="chat-notif" type="button" id="chat-notif" hidden>🔔 Turn on notifications</button>
   <p class="chat-notif-note" id="chat-notif-note" hidden>Notifications are blocked for this site. You can allow them in your browser settings.</p>
-  <div class="chat-list" id="chat-list" aria-live="polite">
-    <p class="chat-empty" id="chat-empty">No messages yet. Say hi to the squad!</p>
+  <div class="chat-body">
+    <div class="chat-list" id="chat-list" aria-live="polite">
+      <p class="chat-empty" id="chat-empty">No messages yet. Say hi to the squad! 👋</p>
+    </div>
+    <button class="chat-newpill" type="button" id="chat-newpill" hidden>New messages ↓</button>
   </div>
   <p class="chat-lock" id="chat-lock">Add your nickname first to chat.</p>
-  <div class="chat-quick" id="chat-quick" hidden></div>
-  <div class="mention-list" id="mention-list" role="listbox" aria-label="Mention someone" hidden></div>
-  <div class="chat-replying" id="chat-replying" hidden>
-    <div><b id="reply-who"></b><span id="reply-text"></span></div>
-    <button type="button" id="reply-cancel" aria-label="Cancel reply">×</button>
+  <div class="chat-compose">
+    <div class="chat-quick" id="chat-quick" hidden></div>
+    <div class="mention-list" id="mention-list" role="listbox" aria-label="Mention someone" hidden></div>
+    <div class="chat-replying tray" id="chat-replying" hidden>
+      <div><b id="reply-who"></b><span id="reply-text"></span></div>
+      <button type="button" id="reply-cancel" aria-label="Cancel reply">×</button>
+    </div>
+    <div class="chat-attach tray" id="chat-attach" hidden>
+      <img id="attach-img" alt="Photo to send">
+      <button type="button" id="attach-cancel" aria-label="Remove photo">×</button>
+    </div>
+    <form class="chat-form" id="chat-form" hidden>
+      <label class="chat-pic" title="Send a photo">
+        <input type="file" accept="image/*" id="chat-file" class="sr-only">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+        <span class="sr-only">Send a photo</span>
+      </label>
+      <button class="chat-at" type="button" id="chat-mention-btn" aria-label="Mention someone">@</button>
+      <label class="sr-only" for="chat-input">Message</label>
+      <input type="text" id="chat-input" maxlength="500" autocomplete="off" enterkeyhint="send" placeholder="Message the squad">
+      <button class="chat-send" type="submit" id="chat-send" aria-label="Send">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.4 20.4l17.4-7.5c.8-.4.8-1.5 0-1.8L3.4 3.6c-.7-.3-1.4.3-1.3 1l.9 5.6c.1.5.5.8.9.9L13 12l-9.1.9c-.4.1-.8.4-.9.9l-.9 5.6c-.1.7.6 1.3 1.3 1z"/></svg>
+      </button>
+    </form>
   </div>
-  <div class="chat-attach" id="chat-attach" hidden>
-    <img id="attach-img" alt="Photo to send">
-    <button type="button" id="attach-cancel" aria-label="Remove photo">×</button>
-  </div>
-  <form class="chat-form" id="chat-form" hidden>
-    <label class="chat-pic" title="Send a photo">
-      <input type="file" accept="image/*" id="chat-file" class="sr-only">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
-      <span class="sr-only">Send a photo</span>
-    </label>
-    <button class="chat-at" type="button" id="chat-mention-btn" aria-label="Mention someone">@</button>
-    <label class="sr-only" for="chat-input">Message</label>
-    <input type="text" id="chat-input" maxlength="500" autocomplete="off" placeholder="Message the squad">
-    <button class="btn" type="submit" id="chat-send">Send</button>
-  </form>
 </section>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

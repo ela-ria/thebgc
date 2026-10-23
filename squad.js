@@ -81,6 +81,7 @@ export function avatarEl(id, extra){
   const m = squad.members[id];
   const el = document.createElement("span");
   el.className = "ava" + (extra ? " " + extra : "") + (isOnline(id) ? " online" : "");
+  el.dataset.uid = id || "";
   if(m && m.photo){
     const img = document.createElement("img");
     img.src = m.photo; img.alt = "";
