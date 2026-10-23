@@ -118,8 +118,40 @@ export function notifState(){ return notifSupported ? Notification.permission : 
 export function enableNotifs(){
   return notifSupported ? Notification.requestPermission() : Promise.resolve("unsupported");
 }
+// in-page notification banner (top of the screen, like a chat app); tap to open what it's about
+const bannerEl = document.getElementById("banner");
+let bannerTimer, bannerTag = "";
+function hideBanner(){
+  if(!bannerEl) return;
+  bannerEl.classList.remove("in");
+  clearTimeout(bannerTimer);
+  bannerTimer = setTimeout(() => { bannerEl.hidden = true; }, 250);
+}
+export function banner(title, body, tag){
+  if(!bannerEl){ toast(body ? title + ": " + body : title); return; }
+  bannerTag = tag || "";
+  document.getElementById("banner-title").textContent = title;
+  document.getElementById("banner-body").textContent = body || "";
+  bannerEl.hidden = false;
+  clearTimeout(bannerTimer);
+  requestAnimationFrame(() => bannerEl.classList.add("in"));
+  bannerTimer = setTimeout(hideBanner, 4500);
+}
+if(bannerEl){
+  bannerEl.addEventListener("click", () => {
+    hideBanner();
+    if(/^(chat|mention|ela)/.test(bannerTag)) document.dispatchEvent(new CustomEvent("bgc:open-chat"));
+    else if(/^(photo|tick)/.test(bannerTag)){ const plan = document.getElementById("plan"); if(plan) plan.scrollIntoView({ behavior:"smooth" }); }
+    else if(bannerTag === "wish"){ const w = document.getElementById("wishes"); if(w) w.scrollIntoView({ behavior:"smooth" }); }
+  });
+  // swipe up to dismiss
+  let sy = 0;
+  bannerEl.addEventListener("touchstart", (e) => { sy = e.touches[0].clientY; }, { passive:true });
+  bannerEl.addEventListener("touchend", (e) => { if(sy - e.changedTouches[0].clientY > 25) hideBanner(); });
+}
+
 export function notify(title, body, tag){
-  if(!document.hidden){ toast(body ? title + ": " + body : title); return; }
+  if(!document.hidden){ banner(title, body, tag); return; }
   missed++;
   document.title = "(" + missed + ") " + baseTitle;
   if(notifState() !== "granted") return;

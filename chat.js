@@ -500,6 +500,7 @@ function closeChat(){
   fab.focus({ preventScroll:true });
 }
 fab.addEventListener("click", () => isOpen() ? closeChat() : openChat());
+document.addEventListener("bgc:open-chat", () => { if(!isOpen()) openChat(); else toBottom(true); });
 $("chat-close").addEventListener("click", closeChat);
 document.addEventListener("keydown", (e) => {
   if(e.key !== "Escape") return;
