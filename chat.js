@@ -1,5 +1,5 @@
 // squad chat: nicknames, replies, reactions, photos, @mentions, and birthday confetti
-import { configured, db } from "./firebase.js";
+import { configured, db, idToken } from "./firebase.js";
 import { squad, onSquad, nick, isMember, notify, notifState, enableNotifs, avatarEl, onlineIds, isOnline, toast } from "./squad.js";
 import { collection, addDoc, doc, updateDoc, deleteDoc, deleteField, onSnapshot, query, orderBy, limitToLast } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -7,12 +7,18 @@ const $ = (id) => document.getElementById(id);
 const fab = $("chat-fab"), badge = $("chat-badge"), panel = $("chat-panel"), list = $("chat-list");
 const form = $("chat-form"), input = $("chat-input"), send = $("chat-send"), lock = $("chat-lock");
 const notifBtn = $("chat-notif"), notifNote = $("chat-notif-note"), newPill = $("chat-newpill");
-const QUICK = ["Happy birthday, Jaspher! 🎂", "Nasaan na kayo?", "Nandito na ako!", "Wait lang, papunta na!", "CR lang saglit", "Kain na tayo!"];
+const QUICK = ["Happy birthday, Jaspher! 🎂", "@ElaAI ano next natin?", "Nasaan na kayo?", "Nandito na ako!", "Wait lang, papunta na!", "CR lang saglit", "Kain na tayo!"];
 const REACTS = ["😂", "❤️", "😮", "😢", "👍", "🎂"];
 const BDAY = /\b(hbd|happy\s*b(irth)?day|happy\s*bday|maligayang\s*kaarawan)\b|🎂|🥳/i;
 const EMOJI_ONLY = /^(?:\p{Extended_Pictographic}|\p{Emoji_Modifier}|️|‍|\s)+$/u;
 const GROUP_MS = 3 * 60 * 1000, GAP_MS = 20 * 60 * 1000;
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// Ela AI: the squad's chat AI, answered by our Vercel function (api/bot.js)
+const BOT = "ela-ai", BOT_NAME = "Ela AI", BOT_HANDLE = "ElaAI";
+const BOT_TAG = /@ElaAI(?![\p{L}\p{N}])/iu, BOT_TAG_ALL = /@ElaAI(?![\p{L}\p{N}])/giu;
+function nameOf(id){ return id === BOT ? BOT_NAME : nick(id); }
+function botAva(){ const a = document.createElement("span"); a.className = "ava small bot"; a.textContent = "✨"; return a; }
 
 let messages = [], byId = {}, rendered = {}, unread = 0, started = false, firstRender = true, loaded = false;
 let replyTo = null, attach = null, openRow = null, mentionedUnread = false;
@@ -35,7 +41,7 @@ function memberIds(){ return Object.keys(squad.members).filter((id) => squad.mem
 function escapeRe(t){ return t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
 let reCache = { key:null, re:null };
 function mentionRe(){
-  const names = memberIds().map((id) => nick(id)).sort((a, b) => b.length - a.length);
+  const names = memberIds().map((id) => nick(id)).concat([BOT_HANDLE]).sort((a, b) => b.length - a.length);
   const key = names.join("\u0000");
   if(reCache.key !== key){
     reCache = { key, re:new RegExp("@(everyone|all" + (names.length ? "|" + names.map(escapeRe).join("|") : "") + ")(?![\\p{L}\\p{N}])", "giu") };
@@ -65,7 +71,7 @@ function textWithMentions(text, el){
     const span = document.createElement("span");
     const word = hit[1].toLowerCase();
     const isMe = word === "everyone" || word === "all" || (!!squad.uid && nick(squad.uid).toLowerCase() === word);
-    span.className = "mention" + (isMe ? " me" : "");
+    span.className = "mention" + (isMe ? " me" : "") + (word === BOT_HANDLE.toLowerCase() ? " bot" : "");
     span.textContent = hit[0];
     el.append(span);
     last = hit.index + hit[0].length;
@@ -79,15 +85,15 @@ function build(m){
   const row = document.createElement("div");
   row.className = "msg-row" + (mine ? " mine" : "");
   row.dataset.id = m.id;
-  row.append(mine ? document.createElement("span") : avatarEl(m.by, "small"));
+  row.append(mine ? document.createElement("span") : (m.by === BOT ? botAva() : avatarEl(m.by, "small")));
 
   const col = document.createElement("div"); col.className = "msg-col";
-  const who = document.createElement("span"); who.className = "who"; who.textContent = mine ? "You" : nick(m.by);
+  const who = document.createElement("span"); who.className = "who"; who.textContent = mine ? "You" : nameOf(m.by);
   col.append(who);
 
   const bubble = document.createElement("div");
   const big = bigEmoji(m.text) && !m.img && !m.replyTo;
-  bubble.className = "msg" + (mine ? " mine" : "") + (big ? " big" : "") + (m.img && !m.text && !m.replyTo ? " photo-only" : "");
+  bubble.className = "msg" + (mine ? " mine" : "") + (m.by === BOT ? " bot" : "") + (big ? " big" : "") + (m.img && !m.text && !m.replyTo ? " photo-only" : "");
   bubble.tabIndex = 0;
   bubble.setAttribute("aria-label", who.textContent + ": " + (m.text || "photo") + ". Press Enter for reactions and reply.");
 
@@ -96,7 +102,7 @@ function build(m){
     const q = document.createElement("button"); q.type = "button"; q.className = "quote";
     const qn = document.createElement("b"), qt = document.createElement("span");
     const qBy = orig ? orig.by : m.replyBy;
-    qn.textContent = "↩ " + (qBy === squad.uid ? "You" : nick(qBy));
+    qn.textContent = "↩ " + (qBy === squad.uid ? "You" : nameOf(qBy));
     qt.textContent = orig ? snippet(orig) : (m.replyText || "Original message");
     q.append(qn, qt);
     q.addEventListener("click", (e) => { e.stopPropagation(); jumpTo(m.replyTo); });
@@ -503,6 +509,48 @@ document.addEventListener("keydown", (e) => {
   else if(isOpen()) closeChat();
 });
 
+// ask Ela AI: show "typing" while our server function thinks, then post the answer as a reply
+async function askBot(question, msgId){
+  const typing = document.createElement("div");
+  typing.className = "msg-row g-first g-last typing-row";
+  const col = document.createElement("div"); col.className = "msg-col";
+  const who = document.createElement("span"); who.className = "who"; who.textContent = BOT_NAME;
+  const bubble = document.createElement("div"); bubble.className = "msg bot typing";
+  bubble.setAttribute("aria-label", BOT_NAME + " is typing");
+  bubble.append(document.createElement("i"), document.createElement("i"), document.createElement("i"));
+  col.append(who, bubble);
+  typing.append(botAva(), col);
+  list.append(typing); toBottom(true);
+  try{
+    const token = await idToken();
+    const context = messages.slice(-15).map((m) => ({
+      who: m.by === BOT ? BOT_NAME : nick(m.by),
+      text: m.text || (m.img ? "[sent a photo]" : "")
+    }));
+    const r = await fetch("api/bot", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + (token || "") },
+      body: JSON.stringify({ question: question.replace(BOT_TAG_ALL, "").trim() || question, asker: nick(squad.uid), context })
+    });
+    if(!r.ok) throw new Error(String(r.status));
+    const { reply } = await r.json();
+    if(!reply) throw new Error("empty");
+    await addDoc(collection(db, "chat"), {
+      by: BOT, botFor: squad.uid, text: String(reply).slice(0, 1000), at: Date.now(),
+      replyTo: msgId, replyBy: squad.uid, replyText: question.slice(0, 80)
+    });
+  }catch(e){
+    const code = e && e.message;
+    toast(code === "429" ? "Ela AI needs a breather. Try again in a minute."
+      : code === "404" || code === "405" ? "Ela AI only works on the live site."
+      : code === "401" ? "Ela AI couldn't confirm it's you. Reload the page and try again."
+      : code === "500" ? "Ela AI isn't set up yet. Add the API key in Vercel."
+      : "Ela AI couldn't answer right now. Try again.");
+  }finally{
+    typing.remove();
+  }
+}
+
 function updateSend(){ send.disabled = !input.value.trim() && !attach; }
 input.addEventListener("input", updateSend);
 
@@ -520,8 +568,9 @@ async function post(text){
   input.value = ""; cancelReply(); clearAttach(); updateSend();
   send.classList.add("sending");
   try{
-    await addDoc(collection(db, "chat"), data);
+    const ref = await addDoc(collection(db, "chat"), data);
     toBottom(true);
+    if(BOT_TAG.test(text)) askBot(text, ref.id);
   }catch(e){
     input.value = saved; updateSend();
     notify("Message didn't send", e && e.code === "permission-denied"
@@ -561,10 +610,12 @@ function renderPick(){
     const b = document.createElement("button");
     b.type = "button"; b.className = "mention-opt" + (i === pickIdx ? " on" : "");
     b.setAttribute("role", "option"); b.setAttribute("aria-selected", i === pickIdx ? "true" : "false");
-    if(it.id) b.append(avatarEl(it.id, "small"));
+    if(it.id === BOT) b.append(botAva());
+    else if(it.id) b.append(avatarEl(it.id, "small"));
     else { const sp = document.createElement("span"); sp.className = "ava small every"; sp.textContent = "@"; b.append(sp); }
     const n = document.createElement("span"); n.textContent = it.label; b.append(n);
     if(!it.id){ const h = document.createElement("small"); h.textContent = "notify the whole squad"; b.append(h); }
+    if(it.id === BOT){ const h = document.createElement("small"); h.textContent = "ask the squad AI"; b.append(h); }
     b.addEventListener("mousedown", (e) => e.preventDefault());
     b.addEventListener("click", () => choose(i));
     pick.append(b);
@@ -581,7 +632,9 @@ function updatePick(){
     .map((id) => ({ id, label:nick(id) }))
     .filter((it) => it.label.toLowerCase().startsWith(q) || it.label.toLowerCase().includes(" " + q))
     .sort((a, b) => a.label.localeCompare(b.label)).slice(0, 6);
-  const items = ("everyone".startsWith(q) ? [{ id:null, label:"everyone" }] : []).concat(people);
+  const items = ("everyone".startsWith(q) ? [{ id:null, label:"everyone" }] : [])
+    .concat(BOT_HANDLE.toLowerCase().startsWith(q) || "ai".startsWith(q) ? [{ id:BOT, label:BOT_HANDLE }] : [])
+    .concat(people);
   pickStart = at; pickItems = items; pickIdx = 0; renderPick();
 }
 function choose(i){
@@ -633,10 +686,10 @@ if(configured){
           if(mentionsMe(m)){
             // mentions always ping, even with the chat open
             if(!isOpen()){ unread++; mentionedUnread = true; setBadge(); }
-            notify(nick(m.by) + (m.everyone ? " → @everyone" : " mentioned you"), body, "mention-" + ch.doc.id);
+            notify(nameOf(m.by) + (m.everyone ? " → @everyone" : " mentioned you"), body, "mention-" + ch.doc.id);
           } else if(!isOpen() || document.hidden){
             if(!isOpen()){ unread++; setBadge(); }
-            notify(nick(m.by), body, "chat");
+            notify(nameOf(m.by), body, m.by === BOT && m.botFor === squad.uid ? "ela-" + ch.doc.id : "chat");
           }
         });
       }

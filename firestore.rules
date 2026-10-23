@@ -44,10 +44,12 @@ service cloud.firestore {
     // only the sender can unsend
     match /chat/{id} {
       allow read: if signedIn();
+      // Ela AI's answers are posted by the person who asked (by "ela-ai", botFor = them)
       allow create: if signedIn()
-        && request.resource.data.by == request.auth.uid
+        && (request.resource.data.by == request.auth.uid
+            || (request.resource.data.by == 'ela-ai' && request.resource.data.botFor == request.auth.uid))
         && request.resource.data.text is string
-        && request.resource.data.text.size() <= 500
+        && request.resource.data.text.size() <= 1000
         && (request.resource.data.text.size() > 0 || ('img' in request.resource.data))
         && (!('img' in request.resource.data)
             || (request.resource.data.img is string && request.resource.data.img.size() < 400000))
@@ -56,7 +58,8 @@ service cloud.firestore {
       allow update: if signedIn()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions'])
         && request.resource.data.reactions.diff(resource.data.get('reactions', {})).affectedKeys().hasOnly([request.auth.uid]);
-      allow delete: if signedIn() && resource.data.by == request.auth.uid;
+      allow delete: if signedIn()
+        && (resource.data.by == request.auth.uid || resource.data.get('botFor', '') == request.auth.uid);
     }
 
     // live map; each person writes only their own pin, and the map closes

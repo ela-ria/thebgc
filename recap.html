@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recap · BGC Gala × Jaspher's Bday</title>
+<meta name="description" content="Every POV, chat photo, and birthday wish from our BGC gala day for Jaspher's birthday, October 24, 2026.">
+<meta name="theme-color" content="#ffd1df">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="BGC Gala">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23d9608b' d='M12 0C12 7 17 12 24 12C17 12 12 17 12 24C12 17 7 12 0 12C7 12 12 7 12 0Z'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@1,500;1,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="star" viewBox="0 0 24 24"><path d="M12 0C12 7 17 12 24 12C17 12 12 17 12 24C12 17 7 12 0 12C7 12 12 7 12 0Z"/></symbol>
+    <symbol id="arrow" viewBox="0 0 24 24"><path d="M7 17L17 7M8 7h9v9"/></symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <nav class="nav" aria-label="Primary">
+    <a class="brand" href="index.html">BGC Gala</a>
+    <ul>
+      <li><a class="link" href="index.html">← Back to the plan</a></li>
+      <li><a class="link" href="#povs">POVs</a></li>
+      <li><a class="link" href="#chat-photos">Chat photos</a></li>
+      <li><a class="link" href="#recap-wishes">Wishes</a></li>
+    </ul>
+  </nav>
+
+  <header class="recap-hero" id="top">
+    <span class="blob b1"></span><span class="blob b2"></span>
+    <svg class="sp s1" aria-hidden="true"><use href="#star"/></svg>
+    <svg class="sp s3" aria-hidden="true"><use href="#star"/></svg>
+    <svg class="sp s5" aria-hidden="true"><use href="#star"/></svg>
+    <span class="date-chip"><svg aria-hidden="true"><use href="#star"/></svg>Saturday, October 24</span>
+    <h1>BGC gala<span class="serif">the recap</span></h1>
+    <p class="bday-line">× Jaspher's birthday</p>
+    <p class="lead">Every POV, chat photo, and birthday wish from the day, in one place.</p>
+    <div class="stats">
+      <div class="stat"><b id="st-povs">–</b><small>POVs</small></div>
+      <div class="stat"><b id="st-squad">–</b><small>Squad</small></div>
+      <div class="stat"><b id="st-chat">–</b><small>Chat photos</small></div>
+      <div class="stat"><b id="st-wishes">–</b><small>Wishes</small></div>
+    </div>
+    <button class="btn" type="button" id="play" disabled>▶ Play slideshow</button>
+  </header>
+
+  <main>
+    <section id="povs">
+      <div class="sec-head">
+        <span class="tiny"><svg aria-hidden="true"><use href="#star"/></svg>Stop by stop</span>
+        <h2>The <span class="serif">POVs</span></h2>
+      </div>
+      <div id="pov-list"><p class="recap-note" id="pov-status">Loading the day…</p></div>
+    </section>
+
+    <section id="chat-photos">
+      <div class="sec-head">
+        <span class="tiny"><svg aria-hidden="true"><use href="#star"/></svg>From the squad chat</span>
+        <h2>Chat <span class="serif">photos</span></h2>
+      </div>
+      <div class="gallery" id="chat-gallery"></div>
+      <p class="recap-empty" id="chat-empty" hidden>No photos were sent in the chat.</p>
+    </section>
+
+    <section id="recap-wishes">
+      <div class="sec-head">
+        <span class="tiny"><svg aria-hidden="true"><use href="#star"/></svg>For the birthday star</span>
+        <h2>Wishes for <span class="serif">Jaspher</span></h2>
+      </div>
+      <div class="wish-wall" id="recap-wall">
+        <p class="wish-empty" id="recap-wish-empty" hidden>No wishes yet. Leave one on the main page!</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="row" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><use href="#star"/></svg>
+      <svg viewBox="0 0 24 24"><use href="#star"/></svg>
+      <svg viewBox="0 0 24 24"><use href="#star"/></svg>
+    </div>
+    <span class="serif">Happy birthday, Jaspher!</span>
+    BGC gala day, October 24
+  </footer>
+</div>
+
+<!-- SLIDESHOW -->
+<div class="show" id="show" role="dialog" aria-modal="true" aria-label="Slideshow" hidden>
+  <div class="show-bar"><i id="show-bar"></i></div>
+  <div class="show-top"><span id="show-where"></span><span id="show-count"></span></div>
+  <div class="show-stage" id="show-stage"></div>
+  <p class="show-cap" id="show-cap"></p>
+  <div class="show-ctl">
+    <button type="button" id="show-prev" aria-label="Previous">←</button>
+    <button class="main" type="button" id="show-toggle">Pause</button>
+    <button type="button" id="show-next" aria-label="Next">→</button>
+    <button type="button" id="show-close">Close</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" hidden></div>
+<script type="module" src="recap.js"></script>
+</body>
+</html>

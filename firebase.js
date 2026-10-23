@@ -19,6 +19,12 @@ function makeDb(){
 }
 export const db = app ? makeDb() : null;
 
+// a short-lived proof of sign-in, for calls to our own server functions (Ela AI)
+export async function idToken(){
+  const user = app ? getAuth(app).currentUser : null;
+  return user ? user.getIdToken() : null;
+}
+
 // resolves with this browser's anonymous user id, or null if sign-in failed
 export const ready = app ? new Promise((resolve) => {
   const auth = getAuth(app);

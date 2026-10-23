@@ -6,6 +6,12 @@
 <title>BGC Gala × Jaspher's Bday</title>
 <meta name="description" content="BGC gala day. Saturday, October 24, 2026. Dress code, itinerary, places and dinner plan.">
 <meta name="theme-color" content="#ffd1df">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="BGC Gala">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23d9608b' d='M12 0C12 7 17 12 24 12C17 12 12 17 12 24C12 17 7 12 0 12C7 12 12 7 12 0Z'/%3E%3C/svg%3E">
 <meta property="og:type" content="website">
 <meta property="og:title" content="BGC Gala × Jaspher's Bday, October 24">
@@ -48,6 +54,7 @@
       <li><a class="link" href="#dinner">Dinner</a></li>
       <li><a class="link" href="#budget">Budget</a></li>
       <li><a class="link" href="#wishes">Wishes</a></li>
+      <li><a class="link" href="recap.html">Recap</a></li>
     </ul>
   </nav>
 
@@ -80,6 +87,17 @@
       <button class="btn light" type="button" id="ics">Download .ics</button>
     </div>
   </header>
+
+  <!-- INSTALL AS APP -->
+  <aside class="install" id="install" hidden>
+    <img src="icons/icon-192.png" alt="" width="48" height="48">
+    <div class="install-txt">
+      <b>Add BGC Gala to your home screen</b>
+      <span id="install-how">Opens like an app, and it's easier to find tomorrow.</span>
+    </div>
+    <button class="btn" type="button" id="install-btn" hidden>Install</button>
+    <button class="install-x" type="button" id="install-x" aria-label="Hide this">×</button>
+  </aside>
 
   <main>
     <!-- SQUAD -->
@@ -503,5 +521,6 @@
 <script type="module" src="chat.js"></script>
 <script type="module" src="location.js"></script>
 <script type="module" src="wishes.js"></script>
+<script src="install.js"></script>
 </body>
 </html>

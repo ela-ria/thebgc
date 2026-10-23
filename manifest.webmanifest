@@ -1,0 +1,16 @@
+{
+  "name": "BGC Gala × Jaspher's Bday",
+  "short_name": "BGC Gala",
+  "description": "Our BGC gala day on October 24: plan, squad chat, live map, POVs, and birthday wishes for Jaspher.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fff5f8",
+  "theme_color": "#ffd1df",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
